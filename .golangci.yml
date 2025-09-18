@@ -1,0 +1,28 @@
+version: "2"
+
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - ineffassign
+    - revive
+    - errcheck
+    - gosec
+    - misspell
+    - unused
+  disable:
+    - varnamelen
+    - depguard # Disabled due to overly restrictive configuration blocking legitimate imports
+  settings:
+    revive:
+      severity: warning
+      rules:
+        - name: unused-parameter
+        - name: exported
+    gosec:
+      excludes: [G304]

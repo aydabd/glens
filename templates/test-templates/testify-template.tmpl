@@ -1,0 +1,486 @@
+package integration
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+// {{.TestSuiteName}} contains integration tests for {{.Method}} {{.Path}}
+type {{.TestSuiteName}} struct {
+	suite.Suite
+	baseURL    string
+	httpClient *http.Client
+}
+
+// SetupSuite runs once before all tests
+func (suite *{{.TestSuiteName}}) SetupSuite() {
+	suite.baseURL = getBaseURL()
+	suite.httpClient = &http.Client{
+		Timeout: 30 * time.Second,
+	}
+}
+
+// TearDownSuite runs once after all tests
+func (suite *{{.TestSuiteName}}) TearDownSuite() {
+	// Clean up resources if needed
+}
+
+// SetupTest runs before each test
+func (suite *{{.TestSuiteName}}) SetupTest() {
+	// Per-test setup if needed
+}
+
+// TearDownTest runs after each test
+func (suite *{{.TestSuiteName}}) TearDownTest() {
+	// Per-test cleanup if needed
+}
+
+{{- if .HappyPathTests}}
+// TestHappyPath tests successful scenarios
+func (suite *{{.TestSuiteName}}) TestHappyPath() {
+	tests := []struct {
+		name           string
+		{{- if .Parameters}}
+		parameters     map[string]interface{}
+		{{- end}}
+		{{- if .RequestBody}}
+		requestBody    interface{}
+		contentType    string
+		{{- end}}
+		expectedStatus int
+		validateResponse func(*testing.T, *http.Response, []byte)
+	}{
+		{{- range .HappyPathTests}}
+		{
+			name: "{{.Name}}",
+			{{- if .Parameters}}
+			parameters: map[string]interface{}{
+				{{- range $key, $value := .Parameters}}
+				"{{$key}}": {{$value}},
+				{{- end}}
+			},
+			{{- end}}
+			{{- if .RequestBody}}
+			requestBody: {{.RequestBody}},
+			contentType: "{{.ContentType}}",
+			{{- end}}
+			expectedStatus: {{.ExpectedStatus}},
+			validateResponse: func(t *testing.T, resp *http.Response, body []byte) {
+				{{.ValidationCode}}
+			},
+		},
+		{{- end}}
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			{{- if .RequestBody}}
+			resp, body := suite.makeRequestWithBody(tt.parameters, tt.requestBody, tt.contentType)
+			{{- else}}
+			resp, body := suite.makeRequest(tt.parameters)
+			{{- end}}
+
+			suite.Equal(tt.expectedStatus, resp.StatusCode, "Expected status code %d, got %d", tt.expectedStatus, resp.StatusCode)
+
+			if tt.validateResponse != nil {
+				tt.validateResponse(suite.T(), resp, body)
+			}
+		})
+	}
+}
+{{- end}}
+
+{{- if .ErrorTests}}
+// TestErrorHandling tests error scenarios
+func (suite *{{.TestSuiteName}}) TestErrorHandling() {
+	tests := []struct {
+		name           string
+		{{- if .Parameters}}
+		parameters     map[string]interface{}
+		{{- end}}
+		{{- if .RequestBody}}
+		requestBody    interface{}
+		contentType    string
+		{{- end}}
+		expectedStatus int
+		expectedError  string
+		description    string
+	}{
+		{{- range .ErrorTests}}
+		{
+			name: "{{.Name}}",
+			{{- if .Parameters}}
+			parameters: map[string]interface{}{
+				{{- range $key, $value := .Parameters}}
+				"{{$key}}": {{$value}},
+				{{- end}}
+			},
+			{{- end}}
+			{{- if .RequestBody}}
+			requestBody: {{.RequestBody}},
+			contentType: "{{.ContentType}}",
+			{{- end}}
+			expectedStatus: {{.ExpectedStatus}},
+			expectedError:  "{{.ExpectedError}}",
+			description:    "{{.Description}}",
+		},
+		{{- end}}
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			{{- if .RequestBody}}
+			resp, body := suite.makeRequestWithBody(tt.parameters, tt.requestBody, tt.contentType)
+			{{- else}}
+			resp, body := suite.makeRequest(tt.parameters)
+			{{- end}}
+
+			suite.Equal(tt.expectedStatus, resp.StatusCode, tt.description)
+
+			// Validate error message if provided
+			if tt.expectedError != "" {
+				suite.Contains(strings.ToLower(string(body)), strings.ToLower(tt.expectedError), "Expected error message not found")
+			}
+		})
+	}
+}
+{{- end}}
+
+{{- if .BoundaryTests}}
+// TestBoundaryValues tests edge cases and boundary values
+func (suite *{{.TestSuiteName}}) TestBoundaryValues() {
+	tests := []struct {
+		name           string
+		{{- if .Parameters}}
+		parameters     map[string]interface{}
+		{{- end}}
+		{{- if .RequestBody}}
+		requestBody    interface{}
+		contentType    string
+		{{- end}}
+		expectedStatus int
+		description    string
+	}{
+		{{- range .BoundaryTests}}
+		{
+			name: "{{.Name}}",
+			{{- if .Parameters}}
+			parameters: map[string]interface{}{
+				{{- range $key, $value := .Parameters}}
+				"{{$key}}": {{$value}},
+				{{- end}}
+			},
+			{{- end}}
+			{{- if .RequestBody}}
+			requestBody: {{.RequestBody}},
+			contentType: "{{.ContentType}}",
+			{{- end}}
+			expectedStatus: {{.ExpectedStatus}},
+			description:    "{{.Description}}",
+		},
+		{{- end}}
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			{{- if .RequestBody}}
+			resp, body := suite.makeRequestWithBody(tt.parameters, tt.requestBody, tt.contentType)
+			{{- else}}
+			resp, body := suite.makeRequest(tt.parameters)
+			{{- end}}
+
+			suite.Equal(tt.expectedStatus, resp.StatusCode, tt.description)
+		})
+	}
+}
+{{- end}}
+
+{{- if .SecurityTests}}
+// TestSecurity tests authentication and authorization
+func (suite *{{.TestSuiteName}}) TestSecurity() {
+	tests := []struct {
+		name           string
+		headers        map[string]string
+		{{- if .Parameters}}
+		parameters     map[string]interface{}
+		{{- end}}
+		{{- if .RequestBody}}
+		requestBody    interface{}
+		contentType    string
+		{{- end}}
+		expectedStatus int
+		description    string
+	}{
+		{{- range .SecurityTests}}
+		{
+			name: "{{.Name}}",
+			headers: map[string]string{
+				{{- range $key, $value := .Headers}}
+				"{{$key}}": "{{$value}}",
+				{{- end}}
+			},
+			{{- if .Parameters}}
+			parameters: map[string]interface{}{
+				{{- range $key, $value := .Parameters}}
+				"{{$key}}": {{$value}},
+				{{- end}}
+			},
+			{{- end}}
+			{{- if .RequestBody}}
+			requestBody: {{.RequestBody}},
+			contentType: "{{.ContentType}}",
+			{{- end}}
+			expectedStatus: {{.ExpectedStatus}},
+			description:    "{{.Description}}",
+		},
+		{{- end}}
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			{{- if .RequestBody}}
+			resp, body := suite.makeRequestWithBodyAndHeaders(tt.parameters, tt.requestBody, tt.contentType, tt.headers)
+			{{- else}}
+			resp, body := suite.makeRequestWithHeaders(tt.parameters, tt.headers)
+			{{- end}}
+
+			suite.Equal(tt.expectedStatus, resp.StatusCode, tt.description)
+		})
+	}
+}
+{{- end}}
+
+{{- if .PerformanceTests}}
+// TestPerformance tests response times and performance
+func (suite *{{.TestSuiteName}}) TestPerformance() {
+	tests := []struct {
+		name           string
+		{{- if .Parameters}}
+		parameters     map[string]interface{}
+		{{- end}}
+		{{- if .RequestBody}}
+		requestBody    interface{}
+		contentType    string
+		{{- end}}
+		maxDuration    time.Duration
+		description    string
+	}{
+		{{- range .PerformanceTests}}
+		{
+			name: "{{.Name}}",
+			{{- if .Parameters}}
+			parameters: map[string]interface{}{
+				{{- range $key, $value := .Parameters}}
+				"{{$key}}": {{$value}},
+				{{- end}}
+			},
+			{{- end}}
+			{{- if .RequestBody}}
+			requestBody: {{.RequestBody}},
+			contentType: "{{.ContentType}}",
+			{{- end}}
+			maxDuration: {{.MaxDuration}},
+			description: "{{.Description}}",
+		},
+		{{- end}}
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			start := time.Now()
+
+			{{- if .RequestBody}}
+			resp, _ := suite.makeRequestWithBody(tt.parameters, tt.requestBody, tt.contentType)
+			{{- else}}
+			resp, _ := suite.makeRequest(tt.parameters)
+			{{- end}}
+
+			duration := time.Since(start)
+
+			suite.True(resp.StatusCode < 500, "Should not return server error")
+			suite.True(duration <= tt.maxDuration,
+				"Request took %v, expected <= %v", duration, tt.maxDuration)
+
+			suite.T().Logf("Performance: %s took %v", tt.name, duration)
+		})
+	}
+}
+{{- end}}
+
+// Helper methods
+
+{{- if .RequestBody}}
+// makeRequestWithBody creates and sends HTTP request with body
+func (suite *{{.TestSuiteName}}) makeRequestWithBody(parameters map[string]interface{}, requestBody interface{}, contentType string) (*http.Response, []byte) {
+	return suite.makeRequestWithBodyAndHeaders(parameters, requestBody, contentType, nil)
+}
+
+// makeRequestWithBodyAndHeaders creates and sends HTTP request with body and custom headers
+func (suite *{{.TestSuiteName}}) makeRequestWithBodyAndHeaders(parameters map[string]interface{}, requestBody interface{}, contentType string, headers map[string]string) (*http.Response, []byte) {
+	url := suite.buildURL(parameters)
+
+	var body io.Reader
+	if requestBody != nil {
+		if contentType == "application/json" {
+			jsonData, err := json.Marshal(requestBody)
+			require.NoError(suite.T(), err, "Failed to marshal request body")
+			body = bytes.NewBuffer(jsonData)
+		} else {
+			body = strings.NewReader(fmt.Sprintf("%v", requestBody))
+		}
+	}
+
+	req, err := http.NewRequest("{{.Method}}", url, body)
+	require.NoError(suite.T(), err, "Failed to create request")
+
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+
+	// Add custom headers
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	// Add default headers
+	suite.addDefaultHeaders(req)
+
+	resp, err := suite.httpClient.Do(req)
+	require.NoError(suite.T(), err, "Failed to send request")
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	require.NoError(suite.T(), err, "Failed to read response body")
+
+	return resp, responseBody
+}
+{{- end}}
+
+// makeRequest creates and sends HTTP request
+func (suite *{{.TestSuiteName}}) makeRequest(parameters map[string]interface{}) (*http.Response, []byte) {
+	return suite.makeRequestWithHeaders(parameters, nil)
+}
+
+// makeRequestWithHeaders creates and sends HTTP request with custom headers
+func (suite *{{.TestSuiteName}}) makeRequestWithHeaders(parameters map[string]interface{}, headers map[string]string) (*http.Response, []byte) {
+	url := suite.buildURL(parameters)
+
+	req, err := http.NewRequest("{{.Method}}", url, nil)
+	require.NoError(suite.T(), err, "Failed to create request")
+
+	// Add custom headers
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	// Add default headers
+	suite.addDefaultHeaders(req)
+
+	resp, err := suite.httpClient.Do(req)
+	require.NoError(suite.T(), err, "Failed to send request")
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	require.NoError(suite.T(), err, "Failed to read response body")
+
+	return resp, responseBody
+}
+
+// buildURL constructs the full URL with path and query parameters
+func (suite *{{.TestSuiteName}}) buildURL(parameters map[string]interface{}) string {
+	path := "{{.Path}}"
+
+	// Replace path parameters
+	{{- range .PathParameters}}
+	if val, exists := parameters["{{.Name}}"]; exists {
+		path = strings.ReplaceAll(path, "{{"{{.Name}}"}}", fmt.Sprintf("%v", val))
+	}
+	{{- end}}
+
+	fullURL := suite.baseURL + path
+
+	// Add query parameters
+	if len(parameters) > 0 {
+		queryParams := url.Values{}
+		{{- range .QueryParameters}}
+		if val, exists := parameters["{{.Name}}"]; exists {
+			queryParams.Add("{{.Name}}", fmt.Sprintf("%v", val))
+		}
+		{{- end}}
+
+		if len(queryParams) > 0 {
+			fullURL += "?" + queryParams.Encode()
+		}
+	}
+
+	return fullURL
+}
+
+// addDefaultHeaders adds common headers to requests
+func (suite *{{.TestSuiteName}}) addDefaultHeaders(req *http.Request) {
+	req.Header.Set("User-Agent", "glens/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	// Add authentication headers if needed
+	// req.Header.Set("Authorization", "Bearer " + getAuthToken())
+}
+
+// getBaseURL returns the base URL for the API
+func getBaseURL() string {
+	// You can override this with environment variables
+	baseURL := "{{.BaseURL}}"
+	if testURL := getEnvOrDefault("TEST_BASE_URL", ""); testURL != "" {
+		baseURL = testURL
+	}
+	return baseURL
+}
+
+// getEnvOrDefault returns environment variable value or default
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getAuthToken returns authentication token for testing
+func getAuthToken() string {
+	// Implement your authentication logic here
+	return getEnvOrDefault("TEST_AUTH_TOKEN", "")
+}
+
+// TestSuite runs the test suite
+func Test{{.TestSuiteName}}(t *testing.T) {
+	suite.Run(t, new({{.TestSuiteName}}))
+}
+
+// Benchmark tests for performance validation
+{{- if .BenchmarkTests}}
+{{- range .BenchmarkTests}}
+func Benchmark{{.Name}}(b *testing.B) {
+	suite := &{{$.TestSuiteName}}{}
+	suite.SetupSuite()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		{{- if .RequestBody}}
+		resp, _ := suite.makeRequestWithBody({{.Parameters}}, {{.RequestBody}}, "{{.ContentType}}")
+		{{- else}}
+		resp, _ := suite.makeRequest({{.Parameters}})
+		{{- end}}
+		resp.Body.Close()
+	}
+}
+{{- end}}
+{{- end}}

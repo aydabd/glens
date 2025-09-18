@@ -1,0 +1,76 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        entry: bash
+        args:
+          [
+            -c,
+            'if [ "$LINT_MODE" = "check" ]; then if [ -n "$(find . -name "*.go" -not -path "./templates/*" | xargs gofmt -l)" ]; then echo "❌ Files need formatting. Run: go fmt ./..."; find . -name "*.go" -not -path "./templates/*" | xargs gofmt -l; exit 1; fi; else echo "🛠️ Formatting Go files..."; find . -name "*.go" -not -path "./templates/*" | xargs gofmt -w; fi',
+          ]
+        language: system
+        types: [go]
+        always_run: true
+        pass_filenames: false
+        exclude: "^templates/"
+      - id: go-vet
+        name: go vet
+        entry: bash -c 'go vet $(go list ./... | grep -v "/templates/")'
+        language: system
+        types: [go]
+        always_run: true
+        pass_filenames: false
+        exclude: "^templates/"
+      - id: shellcheck
+        name: shellcheck
+        entry: shellcheck
+        language: system
+        files: ".*\\.(sh|bash)$"
+        pass_filenames: true
+      - id: markdownlint
+        name: markdownlint
+        entry: markdownlint-cli2 **/*.md
+        language: system
+        files: ".*\\.md$"
+      - id: yamlfmt
+        name: yamlfmt
+        entry: bash
+        args:
+          - -c
+          - 'if [ "$LINT_MODE" = "check" ]; then if ! yamlfmt -dry; then echo "❌ YAML files need formatting. Run: yamlfmt"; exit 1; fi; else echo "🛠️ Formatting YAML files..."; yamlfmt; fi'
+        language: system
+        files: ".*\\.(yml|yaml)$"
+        always_run: true
+        pass_filenames: false
+      - id: prettier
+        name: prettier
+        entry: bash
+        args:
+          - -c
+          - 'if [ "$LINT_MODE" = "check" ]; then if ! prettier --check "**/*.{json,md,yml,yaml}" 2>/dev/null; then echo "❌ Files need formatting. Run: prettier -w \"**/*.{json,md,yml,yaml}\""; exit 1; fi; else echo "🛠️ Formatting with prettier..."; prettier -w "**/*.{json,md,yml,yaml}"; fi'
+        language: system
+        files: ".*\\.(json|md|yml|yaml)$"
+        always_run: true
+        pass_filenames: false
+      - id: hadolint
+        name: hadolint
+        entry: bash -c 'CONTAINER_CMD=$(./scripts/detect-container-runtime.sh) && $CONTAINER_CMD run --rm -v "$PWD":/work -w /work hadolint/hadolint:v2.12.0 hadolint -c .hadolint.yaml "$@"' --
+        language: system
+        files: '(^|/)([Dd]ockerfile|[Cc]ontainerfile)([._-][^/]+)?$|.*\.dockerfile$'
+        pass_filenames: true
+      - id: golangci-lint-system
+        name: golangci-lint
+        entry: bash -c 'if ! command -v golangci-lint >/dev/null 2>&1; then echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0; fi && export PATH="$(go env GOPATH)/bin:$PATH" && golangci-lint run --timeout=3m'
+        language: system
+        types: [go]
+        always_run: true
+        pass_filenames: false

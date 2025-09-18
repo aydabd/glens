@@ -1,0 +1,55 @@
+name: glens-dev
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  # Go programming language
+  - go=1.25.*
+
+  # Development tools
+  - git
+  - make
+  - curl
+  - wget
+
+  # JSON/YAML processing tools
+  - jq
+  - yq
+
+  # Security and analysis tools
+  - ca-certificates
+  - openssl
+
+  # Local LLM support
+  - ollama
+
+  # Optional: useful for development
+  - tree
+  - htop
+  - ripgrep
+
+  # Node.js (for potential web UI or additional tooling)
+  - nodejs=22.*
+
+  # Python (for potential automation scripts)
+  - python=3.13.*
+
+  # Linters and formatters
+  - pre-commit
+  - markdownlint-cli2
+  - prettier
+  - yamlfmt
+  - shellcheck
+
+# Environment variables
+variables:
+  # Go configuration
+  GOPROXY: "https://proxy.golang.org,direct"
+  GOSUMDB: "sum.golang.org"
+  CGO_ENABLED: "1"
+
+  # Development settings
+  DEVELOPMENT: "true"
+
+  # Path additions (micromamba handles this automatically)
+  # GOPATH will be set by Go itself in module mode

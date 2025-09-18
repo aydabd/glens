@@ -1,0 +1,83 @@
+# Glens Configuration Example
+# Copy this file to config.yaml and update with your values
+
+# AI Model Configuration
+ai_models:
+  openai:
+    api_key: "${OPENAI_API_KEY}" # Get from https://platform.openai.com/api-keys
+    model: "gpt-4-turbo"
+    base_url: "https://api.openai.com/v1"
+    timeout: "60s"
+    max_tokens: 4000
+    temperature: 0.7
+
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}" # Get from https://console.anthropic.com/
+    model: "claude-3-sonnet-20240229"
+    base_url: "https://api.anthropic.com"
+    timeout: "60s"
+    max_tokens: 4000
+    temperature: 0.7
+
+  google:
+    credentials: "${GOOGLE_APPLICATION_CREDENTIALS}" # Path to service account JSON
+    project_id: "${GOOGLE_PROJECT_ID}" # Your Google Cloud Project ID
+    model: "gemini-1.5-flash"
+    location: "us-central1"
+    timeout: "60s"
+    max_tokens: 4000
+    temperature: 0.7
+
+# GitHub Configuration
+github:
+  token: "${GITHUB_TOKEN}" # GitHub personal access token
+  repository: "${GITHUB_REPOSITORY}" # Format: owner/repo
+  create_issues: true
+  issue_labels:
+    - "integration-test"
+    - "ai-generated"
+    - "openapi"
+
+# Test Generation Configuration
+test_generation:
+  framework: "testify" # testify, ginkgo, standard
+  timeout: "30s"
+  parallel: true
+  include_security_tests: true
+  include_boundary_tests: true
+  include_error_handling: true
+
+# Test Execution Configuration
+test_execution:
+  timeout: "2m"
+  retries: 3
+  parallel_tests: 5
+  output_format: "json" # json, text
+  capture_logs: true
+
+# Reporting Configuration
+reporting:
+  output_format: "markdown" # markdown, json, html
+  include_prompt_details: true
+  include_execution_logs: true
+  include_performance_metrics: true
+  compare_models: true
+
+# Logging Configuration
+logging:
+  level: "info" # debug, info, warn, error
+  format: "console" # console, json
+  file: "" # empty for stdout
+
+# HTTP Client Configuration
+http:
+  timeout: "30s"
+  retries: 3
+  user_agent: "glens/1.0"
+# Example environment variables you should set:
+# export OPENAI_API_KEY="your_openai_api_key_here"
+# export ANTHROPIC_API_KEY="your_anthropic_api_key_here"
+# export GOOGLE_PROJECT_ID="your-google-project-id"
+# export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+# export GITHUB_TOKEN="your_github_token_here"
+# export GITHUB_REPOSITORY="owner/repo"

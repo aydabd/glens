@@ -1,0 +1,493 @@
+name: OpenAPI Integration Test Generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      openapi_url:
+        description: "OpenAPI specification URL or file path"
+        required: true
+        type: string
+        default: "https://api.example.com/openapi.json"
+
+      ai_models:
+        description: "AI models to use (comma-separated)"
+        required: false
+        type: string
+        default: "gpt4,sonnet4,flash-pro"
+
+      github_repo:
+        description: "Target GitHub repository for issues (owner/repo)"
+        required: false
+        type: string
+        default: ""
+
+      test_framework:
+        description: "Test framework to use"
+        required: false
+        type: choice
+        options:
+          - testify
+          - ginkgo
+          - standard
+        default: "testify"
+
+      create_issues:
+        description: "Create GitHub issues for endpoints"
+        required: false
+        type: boolean
+        default: true
+
+      run_tests:
+        description: "Execute generated tests"
+        required: false
+        type: boolean
+        default: true
+
+      output_format:
+        description: "Report output format"
+        required: false
+        type: choice
+        options:
+          - markdown
+          - html
+          - json
+        default: "markdown"
+
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: "0 2 * * *"
+
+  push:
+    paths:
+      - ".github/workflows/openapi-integration-test.yml"
+      - "openapi-specs/**"
+
+env:
+  GO_VERSION: "1.21"
+  GLENS_VERSION: "latest"
+
+jobs:
+  setup:
+    name: Setup and Validate
+    runs-on: ubuntu-latest
+    outputs:
+      openapi_url: ${{ steps.setup.outputs.openapi_url }}
+      ai_models: ${{ steps.setup.outputs.ai_models }}
+      github_repo: ${{ steps.setup.outputs.github_repo }}
+      should_run: ${{ steps.setup.outputs.should_run }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup parameters
+        id: setup
+        run: |
+          # Set default values based on trigger type
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "openapi_url=${{ github.event.inputs.openapi_url }}" >> $GITHUB_OUTPUT
+            echo "ai_models=${{ github.event.inputs.ai_models }}" >> $GITHUB_OUTPUT
+            echo "github_repo=${{ github.event.inputs.github_repo || github.repository }}" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            # Use default OpenAPI spec for scheduled runs
+            echo "openapi_url=https://petstore3.swagger.io/api/v3/openapi.json" >> $GITHUB_OUTPUT
+            echo "ai_models=gpt4,sonnet4" >> $GITHUB_OUTPUT
+            echo "github_repo=${{ github.repository }}" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            # Push event - check if OpenAPI specs changed
+            if git diff --name-only HEAD~1 HEAD | grep -q "openapi-specs/"; then
+              echo "openapi_url=./openapi-specs/api.json" >> $GITHUB_OUTPUT
+              echo "ai_models=gpt4,sonnet4" >> $GITHUB_OUTPUT
+              echo "github_repo=${{ github.repository }}" >> $GITHUB_OUTPUT
+              echo "should_run=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Validate inputs
+        if: steps.setup.outputs.should_run == 'true'
+        run: |
+          echo "🔍 Validating inputs..."
+          echo "OpenAPI URL: ${{ steps.setup.outputs.openapi_url }}"
+          echo "AI Models: ${{ steps.setup.outputs.ai_models }}"
+          echo "GitHub Repo: ${{ steps.setup.outputs.github_repo }}"
+
+          # Validate OpenAPI URL/file
+          if [[ "${{ steps.setup.outputs.openapi_url }}" =~ ^https?:// ]]; then
+            echo "📡 Checking OpenAPI URL accessibility..."
+            curl -f -s -o /dev/null "${{ steps.setup.outputs.openapi_url }}" || {
+              echo "❌ OpenAPI URL is not accessible"
+              exit 1
+            }
+            echo "✅ OpenAPI URL is accessible"
+          elif [[ -f "${{ steps.setup.outputs.openapi_url }}" ]]; then
+            echo "✅ OpenAPI file exists locally"
+          else
+            echo "❌ OpenAPI specification not found"
+            exit 1
+          fi
+
+  build:
+    name: Build Glens
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.should_run == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build Glens
+        working-directory: ./glens
+        run: |
+          echo "🔨 Building Glens..."
+          go mod download
+          go mod tidy
+          go build -v -o glens .
+          chmod +x glens
+
+          echo "✅ Build completed"
+          ./glens --version || echo "Version command not available"
+
+      - name: Upload agent binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: glens
+          path: ./glens/glens
+          retention-days: 1
+
+  analyze:
+    name: Analyze OpenAPI and Generate Tests
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: needs.setup.outputs.should_run == 'true'
+
+    strategy:
+      matrix:
+        ai-model: ["gpt4", "sonnet4", "flash-pro"]
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download agent binary
+        uses: actions/download-artifact@v3
+        with:
+          name: glens
+          path: ./
+
+      - name: Make agent executable
+        run: chmod +x ./glens
+
+      - name: Create configuration
+        run: |
+          mkdir -p ./config
+          cat > ./config/config.yaml << 'EOF'
+          ai_models:
+            openai:
+              api_key: "${{ secrets.OPENAI_API_KEY }}"
+              model: "gpt-4-turbo"
+              timeout: "60s"
+            anthropic:
+              api_key: "${{ secrets.ANTHROPIC_API_KEY }}"
+              model: "claude-3-sonnet-20240229"
+              timeout: "60s"
+            google:
+              api_key: "${{ secrets.GOOGLE_API_KEY }}"
+              project_id: "${{ secrets.GOOGLE_PROJECT_ID }}"
+              model: "gemini-1.5-flash"
+              timeout: "60s"
+
+          github:
+            token: "${{ secrets.GITHUB_TOKEN }}"
+            repository: "${{ needs.setup.outputs.github_repo }}"
+
+          test_generation:
+            framework: "${{ github.event.inputs.test_framework || 'testify' }}"
+            timeout: "30s"
+
+          logging:
+            level: "info"
+            format: "console"
+          EOF
+
+      - name: Run analysis for ${{ matrix.ai-model }}
+        id: analyze
+        continue-on-error: true
+        run: |
+          echo "🤖 Running analysis with ${{ matrix.ai-model }}..."
+
+          # Check if current model is in the requested list
+          if [[ "${{ needs.setup.outputs.ai_models }}" != *"${{ matrix.ai-model }}"* ]]; then
+            echo "⏭️ Skipping ${{ matrix.ai-model }} - not in requested models"
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          ./glens analyze \
+            --config ./config/config.yaml \
+            --ai-models "${{ matrix.ai-model }}" \
+            --github-repo "${{ needs.setup.outputs.github_repo }}" \
+            --test-framework "${{ github.event.inputs.test_framework || 'testify' }}" \
+            --create-issues="${{ github.event.inputs.create_issues || 'true' }}" \
+            --run-tests="${{ github.event.inputs.run_tests || 'true' }}" \
+            --output "report-${{ matrix.ai-model }}.md" \
+            "${{ needs.setup.outputs.openapi_url }}" || {
+            echo "❌ Analysis failed for ${{ matrix.ai-model }}"
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          echo "✅ Analysis completed for ${{ matrix.ai-model }}"
+          echo "success=true" >> $GITHUB_OUTPUT
+
+      - name: Upload individual report
+        if: steps.analyze.outputs.success == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: report-${{ matrix.ai-model }}
+          path: report-${{ matrix.ai-model }}.md
+          retention-days: 30
+
+      - name: Upload test artifacts
+        if: steps.analyze.outputs.success == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-${{ matrix.ai-model }}
+          path: |
+            ./tests/
+            ./test-results/
+          retention-days: 7
+        continue-on-error: true
+
+  report:
+    name: Generate Combined Report
+    runs-on: ubuntu-latest
+    needs: [setup, analyze]
+    if: always() && needs.setup.outputs.should_run == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all reports
+        uses: actions/download-artifact@v3
+        with:
+          path: ./reports
+        continue-on-error: true
+
+      - name: List downloaded artifacts
+        run: |
+          echo "📁 Downloaded artifacts:"
+          find ./reports -type f -name "*.md" | head -20
+
+      - name: Combine reports
+        run: |
+          echo "📊 Generating combined report..."
+
+          # Create combined report header
+          cat > combined-report.md << 'EOF'
+          # 🤖 OpenAPI Integration Test Analysis Report
+
+          **Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **OpenAPI Source:** ${{ needs.setup.outputs.openapi_url }}
+          **AI Models:** ${{ needs.setup.outputs.ai_models }}
+          **GitHub Repository:** ${{ needs.setup.outputs.github_repo }}
+
+          ## 📋 Analysis Summary
+
+          This report contains the results of automated integration test generation for the OpenAPI specification using multiple AI models.
+
+          EOF
+
+          # Add individual model reports
+          for model in gpt4 sonnet4 flash-pro; do
+            if [[ "${{ needs.setup.outputs.ai_models }}" == *"$model"* ]]; then
+              report_file="./reports/report-$model/report-$model.md"
+              if [[ -f "$report_file" ]]; then
+                echo "" >> combined-report.md
+                echo "## 🤖 $model Results" >> combined-report.md
+                echo "" >> combined-report.md
+                cat "$report_file" >> combined-report.md
+                echo "" >> combined-report.md
+                echo "---" >> combined-report.md
+              else
+                echo "" >> combined-report.md
+                echo "## ❌ $model Results" >> combined-report.md
+                echo "" >> combined-report.md
+                echo "Analysis failed or was skipped for this model." >> combined-report.md
+                echo "" >> combined-report.md
+                echo "---" >> combined-report.md
+              fi
+            fi
+          done
+
+          # Add footer
+          cat >> combined-report.md << 'EOF'
+
+          ## 📎 Additional Information
+
+          - **Workflow:** [OpenAPI Integration Test Generator](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **Repository:** [${{ github.repository }}](${{ github.server_url }}/${{ github.repository }})
+          - **Commit:** [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+
+          *This report was automatically generated by Glens*
+          EOF
+
+      - name: Upload combined report
+        uses: actions/upload-artifact@v3
+        with:
+          name: combined-report
+          path: combined-report.md
+          retention-days: 90
+
+      - name: Create GitHub Pages deployment
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          echo "🌐 Preparing GitHub Pages deployment..."
+          mkdir -p ./pages
+
+          # Convert markdown to HTML
+          cat > ./pages/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>OpenAPI Test Report</title>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                  body { font-family: system-ui, sans-serif; margin: 40px; line-height: 1.6; }
+                  pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+                  code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+                  h1, h2, h3 { color: #333; }
+                  table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                  th { background-color: #f2f2f2; }
+              </style>
+          </head>
+          <body>
+          EOF
+
+          # Simple markdown to HTML conversion (basic)
+          sed -e 's/^# \(.*\)/<h1>\1<\/h1>/' \
+              -e 's/^## \(.*\)/<h2>\1<\/h2>/' \
+              -e 's/^### \(.*\)/<h3>\1<\/h3>/' \
+              -e 's/^\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g' \
+              -e 's/^- \(.*\)/<li>\1<\/li>/' \
+              -e 's/^```/<pre><code>/' \
+              -e 's/```$/<\/code><\/pre>/' \
+              combined-report.md >> ./pages/index.html
+
+          echo "</body></html>" >> ./pages/index.html
+
+          # Copy the markdown file as well
+          cp combined-report.md ./pages/
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pages
+          commit_message: "Deploy OpenAPI test report"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [setup, analyze, report]
+    if: always() && needs.setup.outputs.should_run == 'true'
+
+    steps:
+      - name: Determine overall status
+        id: status
+        run: |
+          if [[ "${{ needs.analyze.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=✅ OpenAPI analysis completed successfully" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.analyze.result }}" == "failure" ]]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=❌ OpenAPI analysis failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=partial" >> $GITHUB_OUTPUT
+            echo "message=⚠️ OpenAPI analysis completed with some issues" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create summary
+        run: |
+          echo "## 📊 OpenAPI Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.status.outputs.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Configuration:**" >> $GITHUB_STEP_SUMMARY
+          echo "- OpenAPI Source: \`${{ needs.setup.outputs.openapi_url }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- AI Models: \`${{ needs.setup.outputs.ai_models }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Target Repository: \`${{ needs.setup.outputs.github_repo }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifacts:**" >> $GITHUB_STEP_SUMMARY
+          echo "- [📄 Combined Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "- [🌐 Web Report](https://$(echo ${{ github.repository }} | cut -d'/' -f1).github.io/$(echo ${{ github.repository }} | cut -d'/' -f2)/)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const message = `## 🤖 OpenAPI Integration Test Results
+
+            ${{ steps.status.outputs.message }}
+
+            **Analysis Summary:**
+            - OpenAPI Source: \`${{ needs.setup.outputs.openapi_url }}\`
+            - AI Models: \`${{ needs.setup.outputs.ai_models }}\`
+            - Workflow Run: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            The analysis results are available in the workflow artifacts.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"${{ steps.status.outputs.message }}\",
+              \"attachments\": [{
+                \"color\": \"${{ steps.status.outputs.status == 'success' && 'good' || 'danger' }}\",
+                \"fields\": [
+                  {\"title\": \"Repository\", \"value\": \"${{ github.repository }}\", \"short\": true},
+                  {\"title\": \"OpenAPI Source\", \"value\": \"${{ needs.setup.outputs.openapi_url }}\", \"short\": true},
+                  {\"title\": \"AI Models\", \"value\": \"${{ needs.setup.outputs.ai_models }}\", \"short\": true},
+                  {\"title\": \"Workflow\", \"value\": \"<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\", \"short\": true}
+                ]
+              }]
+            }" \
+            $SLACK_WEBHOOK_URL
