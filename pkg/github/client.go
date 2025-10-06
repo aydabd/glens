@@ -54,8 +54,13 @@ func (c *Client) SetRepository(repository string) error {
 }
 
 // CreateEndpointIssue creates a GitHub issue for an endpoint with AI model subtasks
+// This should only be called when tests have actually failed
 func (c *Client) CreateEndpointIssue(ctx context.Context, endpoint *parser.Endpoint, aiModels []string) (int, error) {
-	title := fmt.Sprintf("Integration Test: %s %s", endpoint.Method, endpoint.Path)
+	if c.owner == "" || c.repo == "" {
+		return 0, fmt.Errorf("repository not set, call SetRepository first")
+	}
+
+	title := fmt.Sprintf("❌ Test Failure: %s %s", endpoint.Method, endpoint.Path)
 
 	body := c.generateIssueBody(endpoint, aiModels)
 
@@ -63,6 +68,7 @@ func (c *Client) CreateEndpointIssue(ctx context.Context, endpoint *parser.Endpo
 		Title: &title,
 		Body:  &body,
 		Labels: &[]string{
+			"test-failure",
 			"integration-test",
 			"ai-generated",
 			"openapi",
@@ -80,9 +86,9 @@ func (c *Client) CreateEndpointIssue(ctx context.Context, endpoint *parser.Endpo
 	log.Info().
 		Int("issue_number", issueNumber).
 		Str("endpoint", fmt.Sprintf("%s %s", endpoint.Method, endpoint.Path)).
-		Msg("GitHub issue created")
+		Msg("GitHub issue created for test failure")
 
-	// Create subtasks for each AI model
+	// Create subtasks for each AI model that failed
 	for _, aiModel := range aiModels {
 		if err := c.createSubtask(ctx, issueNumber, endpoint, aiModel); err != nil {
 			log.Error().
@@ -100,7 +106,9 @@ func (c *Client) CreateEndpointIssue(ctx context.Context, endpoint *parser.Endpo
 func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string) string {
 	var body strings.Builder
 
-	body.WriteString("## 🎯 Endpoint Integration Test\n\n")
+	body.WriteString("## ❌ Test Failure Report\n\n")
+	body.WriteString("This issue was created because integration tests failed for this endpoint.\n\n")
+	body.WriteString("### 🎯 Endpoint Details\n\n")
 	body.WriteString(fmt.Sprintf("**Method:** `%s`\n", endpoint.Method))
 	body.WriteString(fmt.Sprintf("**Path:** `%s`\n", endpoint.Path))
 
@@ -147,7 +155,7 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 
 	// Responses section
 	if len(endpoint.Responses) > 0 {
-		body.WriteString("\n### 📥 Responses\n\n")
+		body.WriteString("\n### 📥 Expected Responses\n\n")
 		body.WriteString("| Status Code | Description |\n")
 		body.WriteString("|-------------|-------------|\n")
 
@@ -156,31 +164,32 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 		}
 	}
 
-	// AI Models section
-	body.WriteString("\n### 🤖 AI Models for Test Generation\n\n")
-	body.WriteString("This endpoint will be tested using the following AI models:\n\n")
+	// Failed AI Models section
+	body.WriteString("\n### 🤖 Failed Test Runs\n\n")
+	body.WriteString("The following AI models generated tests that failed:\n\n")
 
 	for _, model := range aiModels {
-		body.WriteString(fmt.Sprintf("- [ ] **%s** - Integration test generation and execution\n", model))
+		body.WriteString(fmt.Sprintf("- ❌ **%s** - Tests failed (see subtask for details)\n", model))
 	}
 
-	body.WriteString("\n### 🧪 Test Categories\n\n")
-	body.WriteString("Each AI model will generate tests covering:\n\n")
-	body.WriteString("- [ ] **Happy Path Testing** - Valid requests with expected responses\n")
-	body.WriteString("- [ ] **Error Handling** - Invalid inputs and error responses\n")
-	body.WriteString("- [ ] **Boundary Testing** - Edge cases and limits\n")
-	body.WriteString("- [ ] **Security Testing** - Authentication and authorization\n")
-	body.WriteString("- [ ] **Performance Testing** - Response times and load handling\n")
+	body.WriteString("\n### 🔍 Investigation Checklist\n\n")
+	body.WriteString("- [ ] Review test failure details in comments below\n")
+	body.WriteString("- [ ] Verify OpenAPI specification is correct\n")
+	body.WriteString("- [ ] Check if implementation matches OpenAPI spec\n")
+	body.WriteString("- [ ] Verify test data and parameters are valid\n")
+	body.WriteString("- [ ] Check for authentication/authorization issues\n")
+	body.WriteString("- [ ] Review response formats and status codes\n")
+	body.WriteString("- [ ] Ensure endpoint is accessible and responding\n")
 
-	body.WriteString("\n### 📊 Success Criteria\n\n")
-	body.WriteString("- All generated tests execute successfully\n")
-	body.WriteString("- Tests cover all documented response codes\n")
-	body.WriteString("- Security requirements are validated\n")
-	body.WriteString("- Performance benchmarks are met\n")
-	body.WriteString("- AI model comparison report is generated\n")
+	body.WriteString("\n### 🎯 Resolution Steps\n\n")
+	body.WriteString("1. **Analyze the failure** - Review test output and error messages\n")
+	body.WriteString("2. **Identify root cause** - Determine if it's a spec issue or implementation issue\n")
+	body.WriteString("3. **Fix the issue** - Update spec or implementation as needed\n")
+	body.WriteString("4. **Re-run tests** - Verify the fix resolves the failures\n")
+	body.WriteString("5. **Close issue** - Once all tests pass\n")
 
 	body.WriteString("\n---\n")
-	body.WriteString("*This issue was automatically generated by Glens*")
+	body.WriteString("*This issue was automatically generated by Glens after test failures*")
 
 	return body.String()
 }
@@ -354,4 +363,85 @@ func (c *Client) CloseIssue(ctx context.Context, issueNumber int) error {
 	}
 
 	return nil
+}
+
+// ListIssuesByLabel lists all issues with specific labels
+func (c *Client) ListIssuesByLabel(ctx context.Context, labels []string) ([]*github.Issue, error) {
+	if c.owner == "" || c.repo == "" {
+		return nil, fmt.Errorf("repository not set, call SetRepository first")
+	}
+
+	opts := &github.IssueListByRepoOptions{
+		State:  "all",
+		Labels: labels,
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	var allIssues []*github.Issue
+	for {
+		issues, resp, err := c.client.Issues.ListByRepo(ctx, c.owner, c.repo, opts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list issues: %w", err)
+		}
+
+		allIssues = append(allIssues, issues...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	log.Debug().
+		Int("count", len(allIssues)).
+		Strs("labels", labels).
+		Msg("Listed issues by label")
+
+	return allIssues, nil
+}
+
+// DeleteIssue deletes an issue (note: GitHub API doesn't support deletion, so we close it instead)
+// For actual deletion, issues must be deleted via the web UI by repo admins
+func (c *Client) DeleteIssue(ctx context.Context, issueNumber int) error {
+	log.Warn().
+		Int("issue_number", issueNumber).
+		Msg("GitHub API does not support issue deletion - closing instead")
+
+	return c.CloseIssue(ctx, issueNumber)
+}
+
+// CloseTestIssues closes all test-related issues based on labels
+// This is useful for cleaning up test issues created during integration testing
+func (c *Client) CloseTestIssues(ctx context.Context, labels []string) (int, error) {
+	issues, err := c.ListIssuesByLabel(ctx, labels)
+	if err != nil {
+		return 0, err
+	}
+
+	closedCount := 0
+	for _, issue := range issues {
+		if issue.GetState() == "open" {
+			if err := c.CloseIssue(ctx, issue.GetNumber()); err != nil {
+				log.Error().
+					Err(err).
+					Int("issue_number", issue.GetNumber()).
+					Msg("Failed to close issue")
+				continue
+			}
+			closedCount++
+			log.Info().
+				Int("issue_number", issue.GetNumber()).
+				Str("title", issue.GetTitle()).
+				Msg("Closed test issue")
+		}
+	}
+
+	log.Info().
+		Int("closed_count", closedCount).
+		Int("total_found", len(issues)).
+		Msg("Test issues cleanup completed")
+
+	return closedCount, nil
 }

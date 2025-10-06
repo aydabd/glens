@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -20,9 +21,13 @@ var analyzeCmd = &cobra.Command{
 	Short: "Analyze OpenAPI specification and generate integration tests",
 	Long: `Analyzes an OpenAPI specification from a URL or file path and:
 1. Parses the OpenAPI spec to extract endpoints
-2. Creates GitHub issues for each endpoint
-3. Generates integration tests using AI models (defaults to GPT-4 only)
-4. Executes tests and creates comparison reports`,
+2. Generates integration tests using AI models (defaults to GPT-4 only)
+3. Executes tests against the implementation
+4. Creates GitHub issues ONLY for endpoints where tests fail
+5. Generates comparison reports
+
+GitHub issues are created only when tests fail, indicating a mismatch
+between the OpenAPI specification and the actual implementation.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runAnalyze,
 }
@@ -31,11 +36,11 @@ func init() {
 	rootCmd.AddCommand(analyzeCmd)
 
 	analyzeCmd.Flags().StringSlice("ai-models", []string{"gpt4"}, "AI models to use for test generation (gpt4, ollama, ollama:model-name, etc.)")
-	analyzeCmd.Flags().String("github-repo", "", "GitHub repository (owner/repo)")
+	analyzeCmd.Flags().String("github-repo", "", "GitHub repository in owner/repo format (can also use GITHUB_REPOSITORY env var)")
 	analyzeCmd.Flags().String("test-framework", "testify", "Test framework to use (testify, ginkgo)")
-	analyzeCmd.Flags().Bool("create-issues", true, "Create GitHub issues for endpoints")
+	analyzeCmd.Flags().Bool("create-issues", true, "Create GitHub issues when tests fail (requires github-repo and GITHUB_TOKEN)")
 	analyzeCmd.Flags().Bool("run-tests", true, "Execute generated tests")
-	analyzeCmd.Flags().String("output", "report.md", "Output file for the final report")
+	analyzeCmd.Flags().String("output", "reports/report.md", "Output file for the final report")
 
 	// Endpoint filtering options
 	analyzeCmd.Flags().String("op-id", "", "Target specific endpoint by operation ID (e.g., getPetById, addPet)")
@@ -49,9 +54,16 @@ func init() {
 	_ = viper.BindPFlag("op_id", analyzeCmd.Flags().Lookup("op-id"))
 }
 
-func runAnalyze(_ *cobra.Command, args []string) error {
+func runAnalyze(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	openapiURL := args[0]
+
+	// Handle github repository with proper precedence: CLI flag > env var > config file
+	// If CLI flag is explicitly set, it should override config file values
+	if cmd.Flags().Changed("github-repo") {
+		flagValue, _ := cmd.Flags().GetString("github-repo")
+		viper.Set("github.repository", flagValue)
+	}
 
 	log.Info().
 		Str("openapi_url", openapiURL).
@@ -78,6 +90,19 @@ func runAnalyze(_ *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize GitHub client: %w", err)
 		}
+
+		// Set the target repository
+		repo := viper.GetString("github.repository")
+		if repo == "" {
+			return fmt.Errorf("github repository is required when create-issues is enabled (use --github-repo flag or GITHUB_REPOSITORY env var)")
+		}
+		if err := githubClient.SetRepository(repo); err != nil {
+			return fmt.Errorf("failed to set github repository: %w", err)
+		}
+
+		log.Info().
+			Str("repository", repo).
+			Msg("GitHub client configured")
 	}
 
 	// Initialize AI clients
@@ -146,16 +171,9 @@ func runAnalyze(_ *cobra.Command, args []string) error {
 			Tests:    make(map[string]reporter.TestResult),
 		}
 
-		// Create GitHub issue if enabled
-		if githubClient != nil {
-			issueNumber, err := githubClient.CreateEndpointIssue(ctx, endpoint, viper.GetStringSlice("ai_models"))
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to create GitHub issue")
-			} else {
-				result.IssueNumber = issueNumber
-				log.Info().Int("issue_number", issueNumber).Msg("GitHub issue created")
-			}
-		}
+		// Track if we should create an issue (only if tests fail)
+		hasFailedTests := false
+		failedModels := []string{}
 
 		// Generate and run tests for each AI model
 		for _, modelName := range viper.GetStringSlice("ai_models") {
@@ -193,6 +211,11 @@ func runAnalyze(_ *cobra.Command, args []string) error {
 						Str("ai_model", modelName).
 						Msg("Test execution failed")
 					testResult.ExecutionError = err.Error()
+					// Check if this is a real test failure, not just connection/setup issues
+					if isRealTestFailure(err, execResult) {
+						hasFailedTests = true
+						failedModels = append(failedModels, modelName)
+					}
 				} else {
 					testResult.ExecutionResult = execResult
 					log.Info().
@@ -200,10 +223,44 @@ func runAnalyze(_ *cobra.Command, args []string) error {
 						Bool("passed", execResult.Passed).
 						Dur("duration", execResult.Duration).
 						Msg("Test execution completed")
+
+					// Check if tests failed (not passed and has actual test failures)
+					if execResult.Failed && (execResult.FailureCount > 0 || execResult.ErrorCount > 0) {
+						hasFailedTests = true
+						failedModels = append(failedModels, modelName)
+					}
 				}
 			}
 
 			result.Tests[modelName] = testResult
+		}
+
+		// Create GitHub issue ONLY if tests failed
+		if githubClient != nil && hasFailedTests {
+			log.Info().
+				Str("endpoint", fmt.Sprintf("%s %s", endpoint.Method, endpoint.Path)).
+				Strs("failed_models", failedModels).
+				Msg("Creating GitHub issue for failed tests")
+
+			issueNumber, err := githubClient.CreateEndpointIssue(ctx, endpoint, failedModels)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to create GitHub issue")
+			} else {
+				result.IssueNumber = issueNumber
+				log.Info().
+					Int("issue_number", issueNumber).
+					Msg("GitHub issue created for test failures")
+
+				// Update issue with test results
+				resultsComment := formatTestFailureResults(result, failedModels)
+				if err := githubClient.UpdateIssueWithResults(ctx, issueNumber, resultsComment); err != nil {
+					log.Error().Err(err).Msg("Failed to update issue with results")
+				}
+			}
+		} else if githubClient != nil && !hasFailedTests {
+			log.Info().
+				Str("endpoint", fmt.Sprintf("%s %s", endpoint.Method, endpoint.Path)).
+				Msg("All tests passed - no issue created")
 		}
 
 		results = append(results, result)
@@ -214,6 +271,12 @@ func runAnalyze(_ *cobra.Command, args []string) error {
 	report := reporter.GenerateReport(spec, results)
 
 	outputFile := viper.GetString("output")
+
+	// Ensure the reports directory exists
+	if err := reporter.EnsureReportDirectory(outputFile); err != nil {
+		return fmt.Errorf("failed to create report directory: %w", err)
+	}
+
 	if err := reporter.WriteReport(report, outputFile); err != nil {
 		return fmt.Errorf("failed to write report: %w", err)
 	}
@@ -224,4 +287,85 @@ func runAnalyze(_ *cobra.Command, args []string) error {
 		Msg("Analysis completed successfully")
 
 	return nil
+}
+
+// isRealTestFailure determines if an error represents a real test failure
+// against the OpenAPI spec, not just connection or setup issues
+func isRealTestFailure(err error, result *generator.ExecutionResult) bool {
+	if err == nil {
+		return false
+	}
+
+	// If we have execution results with actual test failures, it's a real failure
+	if result != nil && (result.FailureCount > 0 || result.ErrorCount > 0) {
+		// Check if errors are not just compilation or setup errors
+		for _, testErr := range result.Errors {
+			// These are real test failures, not setup issues
+			if testErr.Type != "error" && testErr.TestName != "compilation" {
+				return true
+			}
+		}
+	}
+
+	errMsg := err.Error()
+
+	// These are setup/infrastructure issues, not real test failures:
+	setupIssues := []string{
+		"failed to create temp directory",
+		"failed to write test file",
+		"failed to create test module",
+		"go mod tidy failed",
+		"compilation",
+	}
+
+	for _, issue := range setupIssues {
+		if strings.Contains(strings.ToLower(errMsg), issue) {
+			return false
+		}
+	}
+
+	// If we can't determine, consider it a real failure to be safe
+	return true
+}
+
+// formatTestFailureResults formats test failure information for GitHub issue
+func formatTestFailureResults(result reporter.EndpointResult, failedModels []string) string {
+	var sb strings.Builder
+
+	sb.WriteString("## Test Execution Results\n\n")
+	sb.WriteString(fmt.Sprintf("**Endpoint:** `%s %s`\n\n", result.Endpoint.Method, result.Endpoint.Path))
+
+	for _, modelName := range failedModels {
+		if testResult, ok := result.Tests[modelName]; ok {
+			sb.WriteString(fmt.Sprintf("### ❌ %s - Tests Failed\n\n", modelName))
+
+			if testResult.ExecutionResult != nil {
+				execResult := testResult.ExecutionResult
+				sb.WriteString(fmt.Sprintf("- **Test Count:** %d\n", execResult.TestCount))
+				sb.WriteString(fmt.Sprintf("- **Failures:** %d\n", execResult.FailureCount))
+				sb.WriteString(fmt.Sprintf("- **Errors:** %d\n", execResult.ErrorCount))
+				sb.WriteString(fmt.Sprintf("- **Duration:** %s\n\n", execResult.Duration))
+
+				if len(execResult.Errors) > 0 {
+					sb.WriteString("#### Failed Tests:\n\n")
+					for _, testErr := range execResult.Errors {
+						sb.WriteString(fmt.Sprintf("**%s** (%s):\n", testErr.TestName, testErr.Type))
+						sb.WriteString(fmt.Sprintf("```\n%s\n```\n\n", testErr.Message))
+					}
+				}
+
+				if execResult.Output != "" {
+					sb.WriteString("<details>\n<summary>Full Test Output</summary>\n\n")
+					sb.WriteString(fmt.Sprintf("```\n%s\n```\n", execResult.Output))
+					sb.WriteString("</details>\n\n")
+				}
+			} else if testResult.ExecutionError != "" {
+				sb.WriteString(fmt.Sprintf("**Execution Error:**\n```\n%s\n```\n\n", testResult.ExecutionError))
+			}
+
+			sb.WriteString("---\n\n")
+		}
+	}
+
+	return sb.String()
 }

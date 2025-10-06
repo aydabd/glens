@@ -59,6 +59,11 @@ func initConfig() {
 	}
 
 	viper.AutomaticEnv()
+	viper.SetEnvPrefix("")
+
+	// Bind environment variables explicitly for GitHub
+	_ = viper.BindEnv("github.token", "GITHUB_TOKEN")
+	_ = viper.BindEnv("github.repository", "GITHUB_REPOSITORY")
 
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())

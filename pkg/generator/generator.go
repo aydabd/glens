@@ -95,10 +95,10 @@ func (g *TestGenerator) generateTestFileName(endpoint *parser.Endpoint) string {
 func (g *TestGenerator) createTestModule(dir string) error {
 	goModContent := `module glens-temp
 
-go 1.21
+go 1.25
 
 require (
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.11.1
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.29.0
 )
@@ -274,7 +274,7 @@ func (g *TestGenerator) GenerateTestFile(endpoint *parser.Endpoint, testCode str
 		GeneratedAt: time.Now(),
 		Metadata: map[string]string{
 			"generator_version": "1.0.0",
-			"go_version":        "1.21",
+			"go_version":        "1.25",
 		},
 	}
 }

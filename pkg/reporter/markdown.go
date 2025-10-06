@@ -8,6 +8,34 @@ import (
 	"glens/pkg/parser"
 )
 
+// fixMarkdownListSpacing ensures lists in markdown text have proper blank lines
+func fixMarkdownListSpacing(text string) string {
+	lines := strings.Split(text, "\n")
+	var result []string
+
+	for i, line := range lines {
+		// Check if current line is a list item
+		trimmed := strings.TrimSpace(line)
+		isListItem := strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "* ")
+
+		// Check if previous line exists and is not a list item or blank
+		if i > 0 && isListItem {
+			prevLine := strings.TrimSpace(lines[i-1])
+			prevIsListItem := strings.HasPrefix(prevLine, "- ") || strings.HasPrefix(prevLine, "* ")
+			prevIsBlank := prevLine == ""
+
+			// Add blank line before list if previous line is not blank and not a list item
+			if !prevIsBlank && !prevIsListItem && prevLine != "" {
+				result = append(result, "")
+			}
+		}
+
+		result = append(result, line)
+	}
+
+	return strings.Join(result, "\n")
+}
+
 // generateMarkdownReport creates a markdown formatted report
 func generateMarkdownReport(report *Report) (string, error) {
 	var md strings.Builder
@@ -70,7 +98,7 @@ func writeExecutiveSummary(md *strings.Builder, summary *Summary) {
 		healthEmoji = "🔴"
 	}
 
-	fmt.Fprintf(md, "\n### Overall Health Status\n")
+	fmt.Fprintf(md, "\n### Overall Health Status\n\n")
 	fmt.Fprintf(md, "%s **%.1f%%** - ", healthEmoji, summary.OverallHealthScore)
 
 	switch {
@@ -103,16 +131,18 @@ func writeSpecificationOverview(md *strings.Builder, spec *parser.OpenAPISpec) {
 	fmt.Fprintf(md, "**OpenAPI Version:** %s\n", spec.Version)
 
 	if spec.Info.Description != "" {
-		fmt.Fprintf(md, "**Description:** %s\n", spec.Info.Description)
+		// Fix list spacing in description to ensure markdown linting compliance
+		fixedDesc := fixMarkdownListSpacing(spec.Info.Description)
+		fmt.Fprintf(md, "**Description:** %s\n\n", fixedDesc)
 	}
 
 	fmt.Fprintf(md, "**Total Endpoints:** %d\n", len(spec.Endpoints))
 
 	// Server information
 	if len(spec.Servers) > 0 {
-		fmt.Fprintf(md, "\n### Servers\n\n")
+		fmt.Fprintf(md, "\n### Servers\n")
 		for _, server := range spec.Servers {
-			fmt.Fprintf(md, "- **%s**", server.URL)
+			fmt.Fprintf(md, "\n- **%s**", server.URL)
 			if server.Description != "" {
 				if server.Description != "" {
 					fmt.Fprintf(md, " - %s", server.Description)
@@ -203,7 +233,7 @@ func writeModelComparison(md *strings.Builder, comparison *ModelComparison) {
 
 		// Strengths and weaknesses
 		if len(model.Strengths) > 0 {
-			fmt.Fprintf(md, "**Strengths:**\n")
+			fmt.Fprintf(md, "**Strengths:**\n\n")
 			for _, strength := range model.Strengths {
 				fmt.Fprintf(md, "- ✅ %s\n", strength)
 			}
@@ -211,7 +241,7 @@ func writeModelComparison(md *strings.Builder, comparison *ModelComparison) {
 		}
 
 		if len(model.Weaknesses) > 0 {
-			fmt.Fprintf(md, "**Weaknesses:**\n")
+			fmt.Fprintf(md, "**Weaknesses:**\n\n")
 			for _, weakness := range model.Weaknesses {
 				fmt.Fprintf(md, "- ⚠️ %s\n", weakness)
 			}
@@ -219,7 +249,7 @@ func writeModelComparison(md *strings.Builder, comparison *ModelComparison) {
 		}
 
 		// Detailed metrics
-		fmt.Fprintf(md, "**Metrics:**\n")
+		fmt.Fprintf(md, "**Metrics:**\n\n")
 		fmt.Fprintf(md, "- Tests Generated: %d\n", model.TestsGenerated)
 		fmt.Fprintf(md, "- Tests Passed: %d\n", model.TestsPassed)
 		fmt.Fprintf(md, "- Tests Failed: %d\n", model.TestsFailed)
@@ -295,7 +325,7 @@ func writeEndpointResults(md *strings.Builder, results []EndpointResult) {
 		fmt.Fprintf(md, "**Test Results by Model:**\n\n")
 		for modelName := range result.Tests {
 			test := result.Tests[modelName]
-			fmt.Fprintf(md, "##### %s\n\n", modelName)
+			fmt.Fprintf(md, "##### Model: %s\n\n", modelName)
 
 			if test.ExecutionResult != nil {
 				status := "✅ Passed"
@@ -312,7 +342,11 @@ func writeEndpointResults(md *strings.Builder, results []EndpointResult) {
 				if len(test.ExecutionResult.Errors) > 0 {
 					fmt.Fprintf(md, "- **Errors:**\n")
 					for _, err := range test.ExecutionResult.Errors {
-						fmt.Fprintf(md, "  - %s: %s\n", err.TestName, err.Message)
+						if err.Message != "" {
+							fmt.Fprintf(md, "  - %s: %s\n", err.TestName, err.Message)
+						} else {
+							fmt.Fprintf(md, "  - %s\n", err.TestName)
+						}
 					}
 				}
 			} else if test.ExecutionError != "" {
@@ -345,8 +379,8 @@ func writeRecommendations(md *strings.Builder, recommendations []Recommendation)
 		}
 
 		fmt.Fprintf(md, "### %s %s\n\n", priorityEmoji, rec.Title)
-		fmt.Fprintf(md, "**Category:** %s  \n", rec.Category)
-		fmt.Fprintf(md, "**Priority:** %s  \n", strings.ToUpper(rec.Priority))
+		fmt.Fprintf(md, "**Category:** %s\n\n", rec.Category)
+		fmt.Fprintf(md, "**Priority:** %s\n\n", strings.ToUpper(rec.Priority))
 		fmt.Fprintf(md, "**Description:** %s\n\n", rec.Description)
 
 		if len(rec.ActionItems) > 0 {
@@ -372,10 +406,10 @@ func writeAppendices(md *strings.Builder, report *Report) {
 	fmt.Fprintf(md, "- **Test Framework:** Go with testify\n")
 	fmt.Fprintf(md, "- **Execution Mode:** Sequential\n")
 	fmt.Fprintf(md, "- **Timeout:** 2 minutes per test\n")
-	fmt.Fprintf(md, "- **Report Generated:** %s\n", report.GeneratedAt.Format(time.RFC3339))
+	fmt.Fprintf(md, "- **Report Generated:** %s\n\n", report.GeneratedAt.Format(time.RFC3339))
 
-	fmt.Fprintf(md, "\n---\n")
-	fmt.Fprintf(md, "*This report was automatically generated by Glens*\n")
+	fmt.Fprintf(md, "---\n\n")
+	fmt.Fprintf(md, "This report was automatically generated by Glens\n")
 }
 
 // getStatusEmoji returns an emoji for the endpoint status

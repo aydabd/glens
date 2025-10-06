@@ -551,3 +551,26 @@ func WriteReport(report *Report, filePath string) error {
 
 	return nil
 }
+
+// EnsureReportDirectory ensures the directory for the report file exists
+func EnsureReportDirectory(filePath string) error {
+	// Extract directory from file path
+	var dir string
+	if lastSlash := strings.LastIndex(filePath, "/"); lastSlash != -1 {
+		dir = filePath[:lastSlash]
+	} else {
+		// No directory in path, current directory is fine
+		return nil
+	}
+
+	// Create directory if it doesn't exist (0o750 for security)
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	log.Debug().
+		Str("directory", dir).
+		Msg("Report directory ensured")
+
+	return nil
+}

@@ -11,6 +11,8 @@ PROFILES_DIR := $(BUILD_DIR)/profiles
 DOCS_DIR := $(BUILD_DIR)/docs
 ENV_NAME := glens-dev
 OPENAPI_URL ?= https://petstore3.swagger.io/api/v3/openapi.json
+GITHUB_REPO_ISSUE_CREATION_TEST ?= aydabd/test-agent-ideas
+OP_ID ?= getPetById
 
 # Build Configuration
 LDFLAGS := -ldflags="-s -w"
@@ -96,6 +98,11 @@ define env_action
 		echo "$(MSG_PREFIX) $(3)..."; \
 		$(4); \
 	fi
+endef
+
+# export github token with gh cli - returns the token value
+define get_github_token
+$(shell gh auth token 2>/dev/null)
 endef
 
 # Default target
@@ -195,6 +202,20 @@ test: check-env ## Run tests with coverage
 	@$(GOCMD) tool cover -html=$(COVERAGE_OUT) -o $(COVERAGE_HTML)
 	@echo "$(SUCCESS) Coverage report: $(COVERAGE_HTML)"
 
+.PHONY: test-integration
+test-integration: check-env ## Run integration tests (requires GITHUB_TOKEN)
+	@echo "$(MSG_PREFIX) Running integration tests..."
+	@GITHUB_TOKEN="$(call get_github_token)" \
+		GITHUB_TEST_REPO="$(GITHUB_REPO_ISSUE_CREATION_TEST)" \
+		$(GOTEST) -v -tags=integration ./pkg/github/... || true
+	@echo "$(SUCCESS) Integration tests completed"
+
+.PHONY: test-short
+test-short: check-env ## Run only unit tests (skip integration)
+	$(call ensure_dirs)
+	@$(GOTEST) -v -short -race -coverprofile=$(COVERAGE_OUT) ./...
+	@echo "$(SUCCESS) Unit tests completed"
+
 .PHONY: bench
 bench: check-env ## Run benchmarks
 	$(call ensure_dirs)
@@ -218,18 +239,42 @@ run-local: build ## Run with local config
 	@$(BUILD_DIR)/$(BINARY_NAME) analyze --config configs/config.yaml $(OPENAPI_URL)
 
 .PHONY: run-ollama
-run-ollama: build ## Run with Ollama model
-	@$(BUILD_DIR)/$(BINARY_NAME) analyze --ai-models ollama $(OPENAPI_URL)
+run-ollama: build ollama-serve ## Run with Ollama model (no GitHub issues)
+	@echo "$(MSG_PREFIX) Running with Ollama (local test, no GitHub issues)..."
+	@$(BUILD_DIR)/$(BINARY_NAME) analyze --ai-models ollama --create-issues=false $(OPENAPI_URL)
+
+.PHONY: run-ollama-issues
+run-ollama-issues: build ollama-serve ## Run with Ollama and create GitHub issues on test failures
+	@echo "$(MSG_PREFIX) Running with Ollama and creating GitHub issues to $(GITHUB_REPO_ISSUE_CREATION_TEST) [op-id: $(OP_ID)]..."
+	@GITHUB_TOKEN="$(call get_github_token)" \
+		$(BUILD_DIR)/$(BINARY_NAME) analyze \
+		--ai-models ollama \
+		--github-repo $(GITHUB_REPO_ISSUE_CREATION_TEST) \
+		--op-id $(OP_ID) \
+		$(OPENAPI_URL)
+
+.PHONY: cleanup-test-issues
+cleanup-test-issues: build ## Clean up test issues from GitHub repository (dry-run by default)
+	@echo "$(MSG_PREFIX) Cleaning up test issues from $(GITHUB_REPO_ISSUE_CREATION_TEST)..."
+	@GITHUB_TOKEN="$(call get_github_token)" $(BUILD_DIR)/$(BINARY_NAME) cleanup \
+		--github-repo $(GITHUB_REPO_ISSUE_CREATION_TEST) \
+		--dry-run
+
+.PHONY: cleanup-test-issues-confirm
+cleanup-test-issues-confirm: build ## Clean up test issues from GitHub repository (actually closes them)
+	@echo "$(MSG_PREFIX) Closing test issues in $(GITHUB_REPO_ISSUE_CREATION_TEST)..."
+	@GITHUB_TOKEN="$(call get_github_token)" $(BUILD_DIR)/$(BINARY_NAME) cleanup \
+		--github-repo $(GITHUB_REPO_ISSUE_CREATION_TEST)
 
 .PHONY: test-endpoint
 test-endpoint: build ## Test specific endpoint (requires OP_ID=<operationId>)
 	@test -n "$(OP_ID)" || { echo "$(ERROR) Please specify: make test-endpoint OP_ID=getPetById"; exit 1; }
 	$(call ensure_dirs)
-	@$(BUILD_DIR)/$(BINARY_NAME) analyze --ai-models ollama --op-id $(OP_ID) --create-issues=false --run-tests=false --output $(REPORTS_DIR)/$(OP_ID)-test.md $(OPENAPI_URL)
+	@GITHUB_TOKEN="$(call get_github_token)" $(BUILD_DIR)/$(BINARY_NAME) analyze --ai-models ollama --op-id $(OP_ID) --create-issues=false --run-tests=false --output $(REPORTS_DIR)/$(OP_ID)-test.md $(OPENAPI_URL)
 
 .PHONY: test-api
 test-api: build ## Test entire API with different OpenAPI spec
-	@$(BUILD_DIR)/$(BINARY_NAME) analyze --ai-models ollama --create-issues=false --run-tests=false $(OPENAPI_URL)
+	@GITHUB_TOKEN="$(call get_github_token)" $(BUILD_DIR)/$(BINARY_NAME) analyze --ai-models ollama --create-issues=false --run-tests=false $(OPENAPI_URL)
 
 # ==============================================================================
 # OLLAMA MANAGEMENT
@@ -237,7 +282,7 @@ test-api: build ## Test entire API with different OpenAPI spec
 
 .PHONY: ollama-serve
 ollama-serve: check-env ## Start Ollama server
-	@$(MAMBA_RUN) ollama serve
+	@$(MAMBA_RUN) ollama serve &>/dev/null & echo "$(SUCCESS) Ollama server started"
 
 .PHONY: ollama-status
 ollama-status: check-env ## Check Ollama status

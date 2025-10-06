@@ -39,8 +39,9 @@ repos:
       - id: markdownlint
         name: markdownlint
         entry: markdownlint-cli2 **/*.md
-        language: system
         files: ".*\\.md$"
+        language: system
+        pass_filenames: true
       - id: yamlfmt
         name: yamlfmt
         entry: bash
