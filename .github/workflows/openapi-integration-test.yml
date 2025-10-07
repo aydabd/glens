@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup parameters
         id: setup
@@ -138,15 +138,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Cache Go modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -168,7 +168,7 @@ jobs:
           ./glens --version || echo "Version command not available"
 
       - name: Upload agent binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: glens
           path: ./glens/glens
@@ -187,10 +187,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download agent binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           name: glens
           path: ./
@@ -262,7 +262,7 @@ jobs:
 
       - name: Upload individual report
         if: steps.analyze.outputs.success == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: report-${{ matrix.ai-model }}
           path: report-${{ matrix.ai-model }}.md
@@ -270,7 +270,7 @@ jobs:
 
       - name: Upload test artifacts
         if: steps.analyze.outputs.success == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tests-${{ matrix.ai-model }}
           path: |
@@ -287,10 +287,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download all reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           path: ./reports
         continue-on-error: true
@@ -354,7 +354,7 @@ jobs:
           EOF
 
       - name: Upload combined report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: combined-report
           path: combined-report.md
@@ -404,7 +404,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./pages
@@ -451,7 +451,7 @@ jobs:
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const message = `## 🤖 OpenAPI Integration Test Results
