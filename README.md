@@ -94,6 +94,23 @@ make help                      # Show all commands
 
 More examples in [docs/QUICKSTART.md](docs/QUICKSTART.md).
 
+## 🧪 Testing & Accuracy
+
+Test Glens' accuracy in generating integration tests:
+
+```bash
+# Run accuracy tests with mock AI (no API keys needed)
+./scripts/test_accuracy.sh
+```
+
+This evaluates:
+- ✅ OpenAPI parsing accuracy
+- ✅ Endpoint coverage
+- ✅ Test code generation quality
+- ✅ Comprehensive reporting
+
+See [ACCURACY_REPORT.md](ACCURACY_REPORT.md) for detailed analysis and [accuracy_tests/ACCURACY_TESTING.md](accuracy_tests/ACCURACY_TESTING.md) for testing documentation.
+
 ## 🤝 Contributing
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for setup and guidelines.
