@@ -99,6 +99,8 @@ func (m *Manager) GetModelCapabilities(modelName string) (ModelCapabilities, err
 // createClient creates an AI client based on model name
 func createClient(modelName string) (Client, error) {
 	switch modelName {
+	case "mock":
+		return NewMockClient("mock"), nil
 	case "gpt4", "openai":
 		return NewOpenAIClient()
 	case "sonnet4", "anthropic":

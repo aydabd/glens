@@ -77,6 +77,9 @@ build/
 generated-tests/
 test-artifacts/
 
+# Accuracy test results
+accuracy_tests/
+
 # GitHub Pages
 _site/
 .sass-cache/
