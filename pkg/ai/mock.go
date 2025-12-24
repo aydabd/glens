@@ -124,7 +124,12 @@ func capitalize(s string) string {
 	if s == "" {
 		return s
 	}
-	return string(s[0]-32) + s[1:]
+	// Convert first character to uppercase using standard library
+	first := s[0]
+	if first >= 'a' && first <= 'z' {
+		return string(first-32) + s[1:]
+	}
+	return s
 }
 
 func sanitizePath(path string) string {
@@ -137,11 +142,12 @@ func sanitizePath(path string) string {
 			continue
 		}
 		
-		if nextUpper {
+		if nextUpper && r >= 'a' && r <= 'z' {
 			result += string(r - 32)
 			nextUpper = false
 		} else {
 			result += string(r)
+			nextUpper = false
 		}
 	}
 	

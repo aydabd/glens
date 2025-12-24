@@ -61,6 +61,17 @@ failed_tests=0
 total_endpoints=0
 declare -A api_metrics
 
+# Helper function for safe division
+safe_percentage() {
+    local numerator=$1
+    local denominator=$2
+    if [ "$denominator" -eq 0 ]; then
+        echo "0"
+    else
+        echo "$((numerator * 100 / denominator))"
+    fi
+}
+
 # Function to extract metrics from report
 extract_metrics() {
     local report_file=$1
@@ -152,6 +163,9 @@ echo -e "${BLUE}Generating Summary Report${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 echo ""
 
+# Calculate success rate safely
+success_rate=$(safe_percentage "${successful_tests}" "${total_tests}")
+
 summary_file="${TEST_RUN_DIR}/ACCURACY_REPORT.md"
 cat > "${summary_file}" <<EOF
 # 🔍 Glens Accuracy Test Report
@@ -161,7 +175,7 @@ cat > "${summary_file}" <<EOF
 **Test Run:** ${TIMESTAMP}
 **Duration:** $(date)
 **APIs Tested:** ${total_tests}
-**Success Rate:** $((successful_tests * 100 / total_tests))%
+**Success Rate:** ${success_rate}%
 
 ### Overall Statistics
 
@@ -171,7 +185,7 @@ cat > "${summary_file}" <<EOF
 | Successful Analyses | ${successful_tests} |
 | Failed Analyses | ${failed_tests} |
 | Total Endpoints Analyzed | ${total_endpoints} |
-| Success Rate | $((successful_tests * 100 / total_tests))% |
+| Success Rate | ${success_rate}% |
 
 ---
 
@@ -225,7 +239,7 @@ EOF
     
     echo "" >> "${summary_file}"
     echo "---" >> "${summary_file}"
-    echo ""  >> "${summary_file}"
+    echo "" >> "${summary_file}"
 done
 
 # Add methodology section
@@ -265,10 +279,11 @@ EOF
 
 # Calculate some basic accuracy metrics
 if [ ${total_endpoints} -gt 0 ]; then
+    parsing_success=$(safe_percentage "${successful_tests}" "${total_tests}")
     cat >> "${summary_file}" <<EOF
 1. **Endpoint Coverage:** ${total_endpoints} endpoints analyzed across ${successful_tests} API specifications
 2. **Test Generation:** Tests successfully generated for all analyzed endpoints
-3. **Parsing Success:** $((successful_tests * 100 / total_tests))% of API specifications parsed successfully
+3. **Parsing Success:** ${parsing_success}% of API specifications parsed successfully
 
 EOF
 fi
@@ -316,7 +331,9 @@ cat >> "${summary_file}" <<'EOF'
 
 EOF
 
-# Print final summary to console
+# Print final summary to console (safe percentage calculation)
+final_success_rate=$(safe_percentage "${successful_tests}" "${total_tests}")
+
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                   TEST SUMMARY                            ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
@@ -325,7 +342,7 @@ echo -e "${CYAN}Total APIs Tested:${NC} ${total_tests}"
 echo -e "${GREEN}Successful:${NC} ${successful_tests}"
 echo -e "${RED}Failed:${NC} ${failed_tests}"
 echo -e "${CYAN}Total Endpoints:${NC} ${total_endpoints}"
-echo -e "${CYAN}Success Rate:${NC} $((successful_tests * 100 / total_tests))%"
+echo -e "${CYAN}Success Rate:${NC} ${final_success_rate}%"
 echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}Results Directory:${NC}"
