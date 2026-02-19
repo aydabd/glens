@@ -103,27 +103,49 @@ func createClient(modelName string) (Client, error) {
 		return NewMockClient("mock"), nil
 	case "enhanced-mock", "mock-enhanced":
 		return NewEnhancedMockClient("enhanced-mock"), nil
+
+	// --- OpenAI ---
 	case "gpt4", "openai", "gpt-4-turbo":
 		return NewOpenAIClient()
 	case "gpt-4o", "gpt4o":
-		// Modern OpenAI model (2024+)
 		return NewOpenAIClientWithModel("gpt-4o")
 	case "gpt-4o-mini", "gpt4o-mini":
-		// Cost-effective modern model
 		return NewOpenAIClientWithModel("gpt-4o-mini")
+	// Latest OpenAI (2025)
+	case "gpt-4.1", "gpt4.1":
+		return NewOpenAIClientWithModel("gpt-4.1")
+	case "gpt-4.1-mini":
+		return NewOpenAIClientWithModel("gpt-4.1-mini")
+	case "o3", "openai-o3":
+		return NewOpenAIClientWithModel("o3")
+	case "o4-mini", "openai-o4-mini":
+		return NewOpenAIClientWithModel("o4-mini")
+
+	// --- Anthropic ---
 	case "sonnet4", "anthropic", "claude-3-sonnet":
 		return NewAnthropicClient()
 	case "claude-3.5-sonnet", "claude-3-5-sonnet":
-		// Latest Claude model (2024+)
 		return NewAnthropicClientWithModel("claude-3-5-sonnet-20241022")
+	// Latest Anthropic (2025)
+	case "claude-3.7-sonnet", "claude-3-7-sonnet":
+		return NewAnthropicClientWithModel("claude-3-7-sonnet-20250219")
+	case "claude-opus-4", "claude-4-opus":
+		return NewAnthropicClientWithModel("claude-opus-4-5")
+
+	// --- Google ---
 	case "flash-pro", "google", "gemini-1.5-flash":
 		return NewGoogleClient()
 	case "gemini-2.0-flash", "gemini-2-flash":
-		// Latest Gemini fast model (2024+)
 		return NewGoogleClientWithModel("gemini-2.0-flash")
 	case "gemini-2.0-pro", "gemini-2-pro":
-		// Latest Gemini capable model (2024+)
 		return NewGoogleClientWithModel("gemini-2.0-pro")
+	// Latest Google (2025)
+	case "gemini-2.5-pro", "gemini-2-5-pro":
+		return NewGoogleClientWithModel("gemini-2.5-pro-preview-03-25")
+	case "gemini-2.5-flash", "gemini-2-5-flash":
+		return NewGoogleClientWithModel("gemini-2.5-flash")
+
+	// --- Ollama (local) ---
 	case "ollama":
 		return NewOllamaClient("")
 	case "ollama_codellama":
@@ -132,6 +154,14 @@ func createClient(modelName string) (Client, error) {
 		return NewOllamaClient("ollama_deepseekcoder")
 	case "ollama_qwen", "qwen-coder":
 		return NewOllamaClient("ollama_qwen")
+	// Latest open-source models via Ollama (2025)
+	case "ollama_deepseek-r2", "deepseek-r2":
+		return NewOllamaClient("ollama_deepseek-r2")
+	case "ollama_qwen3", "qwen3":
+		return NewOllamaClient("ollama_qwen3")
+	case "ollama_llama4", "llama4":
+		return NewOllamaClient("ollama_llama4")
+
 	default:
 		// Check if it's a custom Ollama model (format: ollama:model-name)
 		if len(modelName) > 7 && modelName[:7] == "ollama:" {
