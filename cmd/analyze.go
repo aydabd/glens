@@ -333,34 +333,34 @@ func formatTestFailureResults(result reporter.EndpointResult, failedModels []str
 	var sb strings.Builder
 
 	sb.WriteString("## Test Execution Results\n\n")
-	sb.WriteString(fmt.Sprintf("**Endpoint:** `%s %s`\n\n", result.Endpoint.Method, result.Endpoint.Path))
+	fmt.Fprintf(&sb, "**Endpoint:** `%s %s`\n\n", result.Endpoint.Method, result.Endpoint.Path)
 
 	for _, modelName := range failedModels {
 		if testResult, ok := result.Tests[modelName]; ok {
-			sb.WriteString(fmt.Sprintf("### ❌ %s - Tests Failed\n\n", modelName))
+			fmt.Fprintf(&sb, "### ❌ %s - Tests Failed\n\n", modelName)
 
 			if testResult.ExecutionResult != nil {
 				execResult := testResult.ExecutionResult
-				sb.WriteString(fmt.Sprintf("- **Test Count:** %d\n", execResult.TestCount))
-				sb.WriteString(fmt.Sprintf("- **Failures:** %d\n", execResult.FailureCount))
-				sb.WriteString(fmt.Sprintf("- **Errors:** %d\n", execResult.ErrorCount))
-				sb.WriteString(fmt.Sprintf("- **Duration:** %s\n\n", execResult.Duration))
+				fmt.Fprintf(&sb, "- **Test Count:** %d\n", execResult.TestCount)
+				fmt.Fprintf(&sb, "- **Failures:** %d\n", execResult.FailureCount)
+				fmt.Fprintf(&sb, "- **Errors:** %d\n", execResult.ErrorCount)
+				fmt.Fprintf(&sb, "- **Duration:** %s\n\n", execResult.Duration)
 
 				if len(execResult.Errors) > 0 {
 					sb.WriteString("#### Failed Tests:\n\n")
 					for _, testErr := range execResult.Errors {
-						sb.WriteString(fmt.Sprintf("**%s** (%s):\n", testErr.TestName, testErr.Type))
-						sb.WriteString(fmt.Sprintf("```\n%s\n```\n\n", testErr.Message))
+						fmt.Fprintf(&sb, "**%s** (%s):\n", testErr.TestName, testErr.Type)
+						fmt.Fprintf(&sb, "```\n%s\n```\n\n", testErr.Message)
 					}
 				}
 
 				if execResult.Output != "" {
 					sb.WriteString("<details>\n<summary>Full Test Output</summary>\n\n")
-					sb.WriteString(fmt.Sprintf("```\n%s\n```\n", execResult.Output))
+					fmt.Fprintf(&sb, "```\n%s\n```\n", execResult.Output)
 					sb.WriteString("</details>\n\n")
 				}
 			} else if testResult.ExecutionError != "" {
-				sb.WriteString(fmt.Sprintf("**Execution Error:**\n```\n%s\n```\n\n", testResult.ExecutionError))
+				fmt.Fprintf(&sb, "**Execution Error:**\n```\n%s\n```\n\n", testResult.ExecutionError)
 			}
 
 			sb.WriteString("---\n\n")
