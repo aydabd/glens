@@ -199,19 +199,19 @@ func (c *OpenAIClient) buildPrompt(endpoint *parser.Endpoint) string {
 	var prompt bytes.Buffer
 
 	prompt.WriteString("Generate comprehensive integration tests for this OpenAPI endpoint:\n\n")
-	prompt.WriteString(fmt.Sprintf("**Method:** %s\n", endpoint.Method))
-	prompt.WriteString(fmt.Sprintf("**Path:** %s\n", endpoint.Path))
+	fmt.Fprintf(&prompt, "**Method:** %s\n", endpoint.Method)
+	fmt.Fprintf(&prompt, "**Path:** %s\n", endpoint.Path)
 
 	if endpoint.OperationID != "" {
-		prompt.WriteString(fmt.Sprintf("**Operation ID:** %s\n", endpoint.OperationID))
+		fmt.Fprintf(&prompt, "**Operation ID:** %s\n", endpoint.OperationID)
 	}
 
 	if endpoint.Summary != "" {
-		prompt.WriteString(fmt.Sprintf("**Summary:** %s\n", endpoint.Summary))
+		fmt.Fprintf(&prompt, "**Summary:** %s\n", endpoint.Summary)
 	}
 
 	if endpoint.Description != "" {
-		prompt.WriteString(fmt.Sprintf("**Description:** %s\n\n", endpoint.Description))
+		fmt.Fprintf(&prompt, "**Description:** %s\n\n", endpoint.Description)
 	}
 
 	// Parameters
@@ -223,8 +223,8 @@ func (c *OpenAIClient) buildPrompt(endpoint *parser.Endpoint) string {
 			if param.Required {
 				required = "required"
 			}
-			prompt.WriteString(fmt.Sprintf("- %s (%s, %s): %s - Type: %s\n",
-				param.Name, param.In, required, param.Description, param.Schema.Type))
+			fmt.Fprintf(&prompt, "- %s (%s, %s): %s - Type: %s\n",
+				param.Name, param.In, required, param.Description, param.Schema.Type)
 		}
 		prompt.WriteString("\n")
 	}
@@ -233,12 +233,12 @@ func (c *OpenAIClient) buildPrompt(endpoint *parser.Endpoint) string {
 	if endpoint.RequestBody != nil {
 		prompt.WriteString("**Request Body:**\n")
 		if endpoint.RequestBody.Description != "" {
-			prompt.WriteString(fmt.Sprintf("Description: %s\n", endpoint.RequestBody.Description))
+			fmt.Fprintf(&prompt, "Description: %s\n", endpoint.RequestBody.Description)
 		}
 		prompt.WriteString("Content Types:\n")
 		for contentType := range endpoint.RequestBody.Content {
 			mediaType := endpoint.RequestBody.Content[contentType]
-			prompt.WriteString(fmt.Sprintf("- %s: %s\n", contentType, mediaType.Schema.Type))
+			fmt.Fprintf(&prompt, "- %s: %s\n", contentType, mediaType.Schema.Type)
 		}
 		prompt.WriteString("\n")
 	}
@@ -247,7 +247,7 @@ func (c *OpenAIClient) buildPrompt(endpoint *parser.Endpoint) string {
 	if len(endpoint.Responses) > 0 {
 		prompt.WriteString("**Expected Responses:**\n")
 		for code, response := range endpoint.Responses {
-			prompt.WriteString(fmt.Sprintf("- %s: %s\n", code, response.Description))
+			fmt.Fprintf(&prompt, "- %s: %s\n", code, response.Description)
 		}
 		prompt.WriteString("\n")
 	}

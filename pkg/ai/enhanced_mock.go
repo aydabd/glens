@@ -193,11 +193,11 @@ func (c *EnhancedMockClient) generateEnhancedTestCode(endpoint *parser.Endpoint,
 	testCases.WriteString(")\n\n")
 	
 	// Add main test function
-	testCases.WriteString(fmt.Sprintf("// %s tests the %s %s endpoint\n", testName, endpoint.Method, endpoint.Path))
-	testCases.WriteString(fmt.Sprintf("// Pattern: %s\n", pattern.Name))
-	testCases.WriteString(fmt.Sprintf("func %s(t *testing.T) {\n", testName))
+	fmt.Fprintf(&testCases, "// %s tests the %s %s endpoint\n", testName, endpoint.Method, endpoint.Path)
+	fmt.Fprintf(&testCases, "// Pattern: %s\n", pattern.Name)
+	fmt.Fprintf(&testCases, "func %s(t *testing.T) {\n", testName)
 	testCases.WriteString("\tbaseURL := \"http://localhost:8080\"\n")
-	testCases.WriteString(fmt.Sprintf("\tendpoint := \"%s\"\n\n", endpoint.Path))
+	fmt.Fprintf(&testCases, "\tendpoint := \"%s\"\n\n", endpoint.Path)
 	
 	// Add test scenarios
 	c.addSuccessTest(&testCases, endpoint)
@@ -223,19 +223,19 @@ func (c *EnhancedMockClient) generateEnhancedTestCode(endpoint *parser.Endpoint,
 func (c *EnhancedMockClient) addSuccessTest(sb *strings.Builder, endpoint *parser.Endpoint) {
 	sb.WriteString("\t// Test: Success scenario\n")
 	sb.WriteString("\tt.Run(\"Success\", func(t *testing.T) {\n")
-	sb.WriteString(fmt.Sprintf("\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method)))
+	fmt.Fprintf(sb, "\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method))
 	sb.WriteString("\t\trequire.NoError(t, err)\n\n")
 	sb.WriteString("\t\tclient := &http.Client{Timeout: 10 * time.Second}\n")
 	sb.WriteString("\t\tresp, err := client.Do(req)\n")
 	sb.WriteString("\t\trequire.NoError(t, err)\n")
 	sb.WriteString("\t\tdefer resp.Body.Close()\n\n")
 	sb.WriteString("\t\t// Verify status code\n")
-	
+
 	expectedStatus := "http.StatusOK"
 	if strings.ToUpper(endpoint.Method) == "POST" {
 		expectedStatus = "http.StatusCreated"
 	}
-	sb.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, resp.StatusCode)\n", expectedStatus))
+	fmt.Fprintf(sb, "\t\tassert.Equal(t, %s, resp.StatusCode)\n", expectedStatus)
 	sb.WriteString("\t})\n\n")
 }
 
@@ -244,7 +244,7 @@ func (c *EnhancedMockClient) addEdgeCaseTests(sb *strings.Builder, endpoint *par
 	sb.WriteString("\t// Test: Edge cases\n")
 	sb.WriteString("\tt.Run(\"EdgeCases\", func(t *testing.T) {\n")
 	sb.WriteString("\t\tt.Run(\"EmptyResponse\", func(t *testing.T) {\n")
-	sb.WriteString(fmt.Sprintf("\t\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method)))
+	fmt.Fprintf(sb, "\t\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method))
 	sb.WriteString("\t\t\trequire.NoError(t, err)\n")
 	sb.WriteString("\t\t\treq.Header.Set(\"Accept\", \"application/json\")\n\n")
 	sb.WriteString("\t\t\tclient := &http.Client{}\n")
@@ -260,7 +260,7 @@ func (c *EnhancedMockClient) addErrorTests(sb *strings.Builder, endpoint *parser
 	sb.WriteString("\t// Test: Error scenarios\n")
 	sb.WriteString("\tt.Run(\"Errors\", func(t *testing.T) {\n")
 	sb.WriteString("\t\tt.Run(\"NotFound\", func(t *testing.T) {\n")
-	sb.WriteString(fmt.Sprintf("\t\t\treq, err := http.NewRequest(\"%s\", baseURL+\"/invalid/endpoint\", nil)\n", strings.ToUpper(endpoint.Method)))
+	fmt.Fprintf(sb, "\t\t\treq, err := http.NewRequest(\"%s\", baseURL+\"/invalid/endpoint\", nil)\n", strings.ToUpper(endpoint.Method))
 	sb.WriteString("\t\t\trequire.NoError(t, err)\n\n")
 	sb.WriteString("\t\t\tclient := &http.Client{}\n")
 	sb.WriteString("\t\t\tresp, err := client.Do(req)\n")
@@ -276,7 +276,7 @@ func (c *EnhancedMockClient) addSecurityTests(sb *strings.Builder, endpoint *par
 	sb.WriteString("\t// Test: Security scenarios\n")
 	sb.WriteString("\tt.Run(\"Security\", func(t *testing.T) {\n")
 	sb.WriteString("\t\tt.Run(\"Unauthorized\", func(t *testing.T) {\n")
-	sb.WriteString(fmt.Sprintf("\t\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method)))
+	fmt.Fprintf(sb, "\t\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method))
 	sb.WriteString("\t\t\trequire.NoError(t, err)\n")
 	sb.WriteString("\t\t\t// Don't set Authorization header\n\n")
 	sb.WriteString("\t\t\tclient := &http.Client{}\n")
@@ -294,7 +294,7 @@ func (c *EnhancedMockClient) addPerformanceTest(sb *strings.Builder, endpoint *p
 	sb.WriteString("\t// Test: Performance\n")
 	sb.WriteString("\tt.Run(\"Performance\", func(t *testing.T) {\n")
 	sb.WriteString("\t\tstart := time.Now()\n")
-	sb.WriteString(fmt.Sprintf("\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method)))
+	fmt.Fprintf(sb, "\t\treq, err := http.NewRequest(\"%s\", baseURL+endpoint, nil)\n", strings.ToUpper(endpoint.Method))
 	sb.WriteString("\t\trequire.NoError(t, err)\n\n")
 	sb.WriteString("\t\tclient := &http.Client{}\n")
 	sb.WriteString("\t\tresp, err := client.Do(req)\n")

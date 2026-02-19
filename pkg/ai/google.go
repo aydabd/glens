@@ -189,19 +189,19 @@ func (c *GoogleClient) buildPrompt(endpoint *parser.Endpoint) string {
 	prompt.WriteString("As an expert software testing engineer, generate comprehensive integration tests for this OpenAPI endpoint using Go and testify.\n\n")
 
 	prompt.WriteString("**ENDPOINT SPECIFICATION:**\n")
-	prompt.WriteString(fmt.Sprintf("Method: %s\n", endpoint.Method))
-	prompt.WriteString(fmt.Sprintf("Path: %s\n", endpoint.Path))
+	fmt.Fprintf(&prompt, "Method: %s\n", endpoint.Method)
+	fmt.Fprintf(&prompt, "Path: %s\n", endpoint.Path)
 
 	if endpoint.OperationID != "" {
-		prompt.WriteString(fmt.Sprintf("Operation ID: %s\n", endpoint.OperationID))
+		fmt.Fprintf(&prompt, "Operation ID: %s\n", endpoint.OperationID)
 	}
 
 	if endpoint.Summary != "" {
-		prompt.WriteString(fmt.Sprintf("Summary: %s\n", endpoint.Summary))
+		fmt.Fprintf(&prompt, "Summary: %s\n", endpoint.Summary)
 	}
 
 	if endpoint.Description != "" {
-		prompt.WriteString(fmt.Sprintf("Description: %s\n", endpoint.Description))
+		fmt.Fprintf(&prompt, "Description: %s\n", endpoint.Description)
 	}
 
 	// Parameters
@@ -213,8 +213,8 @@ func (c *GoogleClient) buildPrompt(endpoint *parser.Endpoint) string {
 			if param.Required {
 				required = "Required"
 			}
-			prompt.WriteString(fmt.Sprintf("• %s (%s, %s): %s [Type: %s]\n",
-				param.Name, param.In, required, param.Description, param.Schema.Type))
+			fmt.Fprintf(&prompt, "• %s (%s, %s): %s [Type: %s]\n",
+				param.Name, param.In, required, param.Description, param.Schema.Type)
 		}
 	}
 
@@ -222,12 +222,12 @@ func (c *GoogleClient) buildPrompt(endpoint *parser.Endpoint) string {
 	if endpoint.RequestBody != nil {
 		prompt.WriteString("\n**REQUEST BODY:**\n")
 		if endpoint.RequestBody.Description != "" {
-			prompt.WriteString(fmt.Sprintf("Description: %s\n", endpoint.RequestBody.Description))
+			fmt.Fprintf(&prompt, "Description: %s\n", endpoint.RequestBody.Description)
 		}
 		prompt.WriteString("Supported Content Types:\n")
 		for contentType := range endpoint.RequestBody.Content {
 			mediaType := endpoint.RequestBody.Content[contentType]
-			prompt.WriteString(fmt.Sprintf("• %s: %s\n", contentType, mediaType.Schema.Type))
+			fmt.Fprintf(&prompt, "• %s: %s\n", contentType, mediaType.Schema.Type)
 		}
 	}
 
@@ -235,7 +235,7 @@ func (c *GoogleClient) buildPrompt(endpoint *parser.Endpoint) string {
 	if len(endpoint.Responses) > 0 {
 		prompt.WriteString("\n**EXPECTED RESPONSES:**\n")
 		for code, response := range endpoint.Responses {
-			prompt.WriteString(fmt.Sprintf("• HTTP %s: %s\n", code, response.Description))
+			fmt.Fprintf(&prompt, "• HTTP %s: %s\n", code, response.Description)
 		}
 	}
 
