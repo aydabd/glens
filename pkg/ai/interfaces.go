@@ -101,19 +101,36 @@ func createClient(modelName string) (Client, error) {
 	switch modelName {
 	case "mock":
 		return NewMockClient("mock"), nil
-	case "gpt4", "openai":
+	case "enhanced-mock", "mock-enhanced":
+		return NewEnhancedMockClient("enhanced-mock"), nil
+	case "gpt4", "openai", "gpt-4-turbo":
 		return NewOpenAIClient()
-	case "sonnet4", "anthropic":
+	case "gpt-4o", "gpt4o":
+		// Modern OpenAI model (2024+)
+		return NewOpenAIClientWithModel("gpt-4o")
+	case "gpt-4o-mini", "gpt4o-mini":
+		// Cost-effective modern model
+		return NewOpenAIClientWithModel("gpt-4o-mini")
+	case "sonnet4", "anthropic", "claude-3-sonnet":
 		return NewAnthropicClient()
-	case "flash-pro", "google":
+	case "claude-3.5-sonnet", "claude-3-5-sonnet":
+		// Latest Claude model (2024+)
+		return NewAnthropicClientWithModel("claude-3-5-sonnet-20241022")
+	case "flash-pro", "google", "gemini-1.5-flash":
 		return NewGoogleClient()
+	case "gemini-2.0-flash", "gemini-2-flash":
+		// Latest Gemini fast model (2024+)
+		return NewGoogleClientWithModel("gemini-2.0-flash")
+	case "gemini-2.0-pro", "gemini-2-pro":
+		// Latest Gemini capable model (2024+)
+		return NewGoogleClientWithModel("gemini-2.0-pro")
 	case "ollama":
 		return NewOllamaClient("")
 	case "ollama_codellama":
 		return NewOllamaClient("ollama")
-	case "ollama_deepseekcoder":
+	case "ollama_deepseekcoder", "deepseek-coder":
 		return NewOllamaClient("ollama_deepseekcoder")
-	case "ollama_qwen":
+	case "ollama_qwen", "qwen-coder":
 		return NewOllamaClient("ollama_qwen")
 	default:
 		// Check if it's a custom Ollama model (format: ollama:model-name)

@@ -305,3 +305,21 @@ func (c *OpenAIClient) makeRequest(ctx context.Context, request OpenAIRequest) (
 
 	return &response, nil
 }
+
+// NewOpenAIClientWithModel creates a new OpenAI client with a specific model
+func NewOpenAIClientWithModel(modelName string) (*OpenAIClient, error) {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		return nil, ErrAPIKeyMissing{Model: "OpenAI"}
+	}
+
+	return &OpenAIClient{
+		apiKey:    apiKey,
+		baseURL:   "https://api.openai.com/v1",
+		model:     modelName,
+		maxTokens: 4000,
+		client: &http.Client{
+			Timeout: 60 * time.Second,
+		},
+	}, nil
+}

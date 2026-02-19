@@ -308,3 +308,27 @@ func (c *GoogleClient) makeRequest(ctx context.Context, request GoogleRequest) (
 
 	return &response, nil
 }
+
+// NewGoogleClientWithModel creates a new Google client with a specific model
+func NewGoogleClientWithModel(modelName string) (*GoogleClient, error) {
+	apiKey := os.Getenv("GOOGLE_API_KEY")
+	if apiKey == "" {
+		return nil, ErrAPIKeyMissing{Model: "Google"}
+	}
+	
+	projectID := os.Getenv("GOOGLE_PROJECT_ID")
+	if projectID == "" {
+		projectID = "default-project" // Use a default if not specified
+	}
+
+	return &GoogleClient{
+		apiKey:    apiKey,
+		baseURL:   "https://generativelanguage.googleapis.com/v1beta",
+		model:     modelName,
+		maxTokens: 4000,
+		projectID: projectID,
+		client: &http.Client{
+			Timeout: 60 * time.Second,
+		},
+	}, nil
+}

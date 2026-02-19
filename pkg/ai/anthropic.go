@@ -284,3 +284,21 @@ func (c *AnthropicClient) makeRequest(ctx context.Context, request AnthropicRequ
 
 	return &response, nil
 }
+
+// NewAnthropicClientWithModel creates a new Anthropic client with a specific model
+func NewAnthropicClientWithModel(modelName string) (*AnthropicClient, error) {
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		return nil, ErrAPIKeyMissing{Model: "Anthropic"}
+	}
+
+	return &AnthropicClient{
+		apiKey:    apiKey,
+		baseURL:   "https://api.anthropic.com",
+		model:     modelName,
+		maxTokens: 4000,
+		client: &http.Client{
+			Timeout: 60 * time.Second,
+		},
+	}, nil
+}
