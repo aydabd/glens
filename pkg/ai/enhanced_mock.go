@@ -47,7 +47,7 @@ func NewEnhancedMockClient(modelName string) *EnhancedMockClient {
 }
 
 // GenerateTest generates an enhanced mock test
-func (c *EnhancedMockClient) GenerateTest(ctx context.Context, endpoint *parser.Endpoint) (*TestGenerationResult, error) {
+func (c *EnhancedMockClient) GenerateTest(_ context.Context, endpoint *parser.Endpoint) (*TestGenerationResult, error) {
 	startTime := time.Now()
 	
 	// Select appropriate pattern based on endpoint
@@ -313,7 +313,7 @@ func (c *EnhancedMockClient) buildPrompt(endpoint *parser.Endpoint) string {
 }
 
 // calculateQualityMetrics estimates test quality
-func (c *EnhancedMockClient) calculateQualityMetrics(testCode string, endpoint *parser.Endpoint) TestQualityMetrics {
+func (c *EnhancedMockClient) calculateQualityMetrics(testCode string, _ *parser.Endpoint) TestQualityMetrics {
 	metrics := TestQualityMetrics{}
 	
 	// Completeness: based on test scenarios covered

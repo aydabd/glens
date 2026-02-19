@@ -111,26 +111,38 @@ func createClient(modelName string) (Client, error) {
 		return NewOpenAIClientWithModel("gpt-4o")
 	case "gpt-4o-mini", "gpt4o-mini":
 		return NewOpenAIClientWithModel("gpt-4o-mini")
-	// Latest OpenAI (2025)
-	case "gpt-4.1", "gpt4.1":
+	// OpenAI GPT-4.1 family (2025)
+	case "gpt-4.1":
 		return NewOpenAIClientWithModel("gpt-4.1")
 	case "gpt-4.1-mini":
 		return NewOpenAIClientWithModel("gpt-4.1-mini")
+	case "gpt-4.1-nano":
+		return NewOpenAIClientWithModel("gpt-4.1-nano")
+	// OpenAI reasoning models (o-series)
 	case "o3", "openai-o3":
 		return NewOpenAIClientWithModel("o3")
+	case "o3-mini", "openai-o3-mini":
+		return NewOpenAIClientWithModel("o3-mini")
 	case "o4-mini", "openai-o4-mini":
 		return NewOpenAIClientWithModel("o4-mini")
+	// OpenAI Codex (code-focused)
+	case "codex", "codex-mini":
+		return NewOpenAIClientWithModel("codex-mini-latest")
 
 	// --- Anthropic ---
 	case "sonnet4", "anthropic", "claude-3-sonnet":
 		return NewAnthropicClient()
 	case "claude-3.5-sonnet", "claude-3-5-sonnet":
 		return NewAnthropicClientWithModel("claude-3-5-sonnet-20241022")
-	// Latest Anthropic (2025)
+	// Claude 3.7 / 4.x family (2025)
 	case "claude-3.7-sonnet", "claude-3-7-sonnet":
 		return NewAnthropicClientWithModel("claude-3-7-sonnet-20250219")
-	case "claude-opus-4", "claude-4-opus":
+	case "claude-sonnet-4", "claude-sonnet-4-5":
+		return NewAnthropicClientWithModel("claude-sonnet-4-5")
+	case "claude-opus-4", "claude-4-opus", "claude-opus-4-5":
 		return NewAnthropicClientWithModel("claude-opus-4-5")
+	case "claude-haiku-4", "claude-haiku-4-5":
+		return NewAnthropicClientWithModel("claude-haiku-4-5")
 
 	// --- Google ---
 	case "flash-pro", "google", "gemini-1.5-flash":
@@ -139,13 +151,25 @@ func createClient(modelName string) (Client, error) {
 		return NewGoogleClientWithModel("gemini-2.0-flash")
 	case "gemini-2.0-pro", "gemini-2-pro":
 		return NewGoogleClientWithModel("gemini-2.0-pro")
-	// Latest Google (2025)
+	// Gemini 2.5 family (2025)
 	case "gemini-2.5-pro", "gemini-2-5-pro":
 		return NewGoogleClientWithModel("gemini-2.5-pro-preview-03-25")
 	case "gemini-2.5-flash", "gemini-2-5-flash":
 		return NewGoogleClientWithModel("gemini-2.5-flash")
 
-	// --- Ollama (local) ---
+	// --- Mistral (OpenAI-compatible API, requires MISTRAL_API_KEY) ---
+	case "mistral", "mistral-large":
+		return NewMistralClient("mistral-large-latest")
+	case "mistral-medium":
+		return NewMistralClient("mistral-medium-latest")
+	case "mistral-small":
+		return NewMistralClient("mistral-small-latest")
+	case "codestral", "mistral-code":
+		return NewMistralClient("codestral-latest")
+	case "mistral-nemo":
+		return NewMistralClient("open-mistral-nemo")
+
+	// --- Ollama (local / self-hosted) ---
 	case "ollama":
 		return NewOllamaClient("")
 	case "ollama_codellama":
@@ -154,7 +178,6 @@ func createClient(modelName string) (Client, error) {
 		return NewOllamaClient("ollama_deepseekcoder")
 	case "ollama_qwen", "qwen-coder":
 		return NewOllamaClient("ollama_qwen")
-	// Latest open-source models via Ollama (2025)
 	case "ollama_deepseek-r2", "deepseek-r2":
 		return NewOllamaClient("ollama_deepseek-r2")
 	case "ollama_qwen3", "qwen3":

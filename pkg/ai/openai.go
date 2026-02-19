@@ -323,3 +323,22 @@ func NewOpenAIClientWithModel(modelName string) (*OpenAIClient, error) {
 		},
 	}, nil
 }
+
+// NewMistralClient creates a client for Mistral AI (OpenAI-compatible API).
+// Requires MISTRAL_API_KEY env var.
+func NewMistralClient(modelName string) (*OpenAIClient, error) {
+	apiKey := os.Getenv("MISTRAL_API_KEY")
+	if apiKey == "" {
+		return nil, ErrAPIKeyMissing{Model: "Mistral"}
+	}
+
+	return &OpenAIClient{
+		apiKey:    apiKey,
+		baseURL:   "https://api.mistral.ai/v1",
+		model:     modelName,
+		maxTokens: 4000,
+		client: &http.Client{
+			Timeout: 60 * time.Second,
+		},
+	}, nil
+}

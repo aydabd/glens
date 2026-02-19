@@ -225,6 +225,52 @@ func TestManager_ModelNotFound(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// TestCreateClient_RequiresAPIKey verifies that cloud models return an error
+// when the required environment variable is not set.
+func TestCreateClient_RequiresAPIKey(t *testing.T) {
+	cloudModels := []string{
+		// OpenAI
+		"gpt-4o", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
+		"o3", "o3-mini", "o4-mini", "codex",
+		// Anthropic
+		"claude-3.5-sonnet", "claude-3.7-sonnet",
+		"claude-sonnet-4", "claude-opus-4", "claude-haiku-4",
+		// Google
+		"gemini-2.5-pro", "gemini-2.5-flash",
+		"gemini-2.0-flash", "gemini-2.0-pro",
+		// Mistral
+		"mistral", "mistral-medium", "mistral-small",
+		"codestral", "mistral-nemo",
+	}
+
+	for _, name := range cloudModels {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, err := createClient(name)
+			// Without an API key set the client must return an error.
+			assert.Error(t, err, "model %q should require an API key", name)
+		})
+	}
+}
+
+// TestCreateClient_LocalModels verifies that local Ollama models don't require
+// an API key to construct.
+func TestCreateClient_LocalModels(t *testing.T) {
+	localModels := []string{
+		"mock", "enhanced-mock",
+	}
+	for _, name := range localModels {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			c, err := createClient(name)
+			assert.NoError(t, err, "model %q should not need an API key", name)
+			assert.NotNil(t, c)
+		})
+	}
+}
+
 // --- Helper functions ---
 
 func TestCapitalize(t *testing.T) {

@@ -30,22 +30,22 @@ func generateHTMLReportSimple(report *Report) (string, error) {
 
 	// Header
 	htmlBuilder.WriteString("<h1>📊 OpenAPI Integration Test Report</h1>\n")
-	htmlBuilder.WriteString(fmt.Sprintf("<p><strong>Generated:</strong> %s</p>\n", report.GeneratedAt.Format(time.RFC3339)))
-	htmlBuilder.WriteString(fmt.Sprintf("<p><strong>Execution Time:</strong> %s</p>\n", report.ExecutionTime))
-	htmlBuilder.WriteString(fmt.Sprintf("<p><strong>API:</strong> %s v%s</p>\n",
+	fmt.Fprintf(&htmlBuilder, "<p><strong>Generated:</strong> %s</p>\n", report.GeneratedAt.Format(time.RFC3339))
+	fmt.Fprintf(&htmlBuilder, "<p><strong>Execution Time:</strong> %s</p>\n", report.ExecutionTime)
+	fmt.Fprintf(&htmlBuilder, "<p><strong>API:</strong> %s v%s</p>\n",
 		html.EscapeString(report.Specification.Info.Title),
-		html.EscapeString(report.Specification.Info.Version)))
+		html.EscapeString(report.Specification.Info.Version))
 
 	// Summary
 	htmlBuilder.WriteString("<h2>📈 Summary</h2>\n")
 	htmlBuilder.WriteString("<table>\n")
 	htmlBuilder.WriteString("<tr><th>Metric</th><th>Value</th></tr>\n")
-	htmlBuilder.WriteString(fmt.Sprintf("<tr><td>Total Endpoints</td><td>%d</td></tr>\n", report.Summary.TotalEndpoints))
-	htmlBuilder.WriteString(fmt.Sprintf("<tr><td>Endpoints Processed</td><td>%d</td></tr>\n", report.Summary.EndpointsProcessed))
-	htmlBuilder.WriteString(fmt.Sprintf("<tr><td>Total Tests</td><td>%d</td></tr>\n", report.Summary.TotalTests))
-	htmlBuilder.WriteString(fmt.Sprintf("<tr><td>Tests Passed</td><td>%d</td></tr>\n", report.Summary.PassedTests))
-	htmlBuilder.WriteString(fmt.Sprintf("<tr><td>Tests Failed</td><td>%d</td></tr>\n", report.Summary.FailedTests))
-	htmlBuilder.WriteString(fmt.Sprintf("<tr><td>Overall Health Score</td><td>%.1f%%</td></tr>\n", report.Summary.OverallHealthScore))
+	fmt.Fprintf(&htmlBuilder, "<tr><td>Total Endpoints</td><td>%d</td></tr>\n", report.Summary.TotalEndpoints)
+	fmt.Fprintf(&htmlBuilder, "<tr><td>Endpoints Processed</td><td>%d</td></tr>\n", report.Summary.EndpointsProcessed)
+	fmt.Fprintf(&htmlBuilder, "<tr><td>Total Tests</td><td>%d</td></tr>\n", report.Summary.TotalTests)
+	fmt.Fprintf(&htmlBuilder, "<tr><td>Tests Passed</td><td>%d</td></tr>\n", report.Summary.PassedTests)
+	fmt.Fprintf(&htmlBuilder, "<tr><td>Tests Failed</td><td>%d</td></tr>\n", report.Summary.FailedTests)
+	fmt.Fprintf(&htmlBuilder, "<tr><td>Overall Health Score</td><td>%.1f%%</td></tr>\n", report.Summary.OverallHealthScore)
 	htmlBuilder.WriteString("</table>\n")
 
 	// Footer

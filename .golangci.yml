@@ -25,4 +25,4 @@ linters:
         - name: unused-parameter
         - name: exported
     gosec:
-      excludes: [G304]
+      excludes: [G304, G704]

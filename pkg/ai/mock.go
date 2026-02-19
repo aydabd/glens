@@ -24,7 +24,7 @@ func NewMockClient(modelName string) *MockClient {
 }
 
 // GenerateTest generates a mock test for demonstration purposes
-func (c *MockClient) GenerateTest(ctx context.Context, endpoint *parser.Endpoint) (*TestGenerationResult, error) {
+func (c *MockClient) GenerateTest(_ context.Context, endpoint *parser.Endpoint) (*TestGenerationResult, error) {
 	testCode := c.generateMockTestCode(endpoint)
 
 	result := &TestGenerationResult{
