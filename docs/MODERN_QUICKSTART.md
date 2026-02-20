@@ -18,6 +18,7 @@ We now support the newest, fastest, and most cost-effective AI models:
 ### ✨ Enhanced Mock Client
 
 Our improved offline testing client now generates:
+
 - ✅ **Success scenarios**: Happy path tests
 - ✅ **Error handling**: 404, 500, etc.
 - ✅ **Security tests**: Auth, permissions
@@ -27,6 +28,7 @@ Our improved offline testing client now generates:
 ### 📊 Quality Metrics
 
 Every test now includes quality scores:
+
 - **Completeness**: Test scenario coverage
 - **Security**: Security test coverage  
 - **Edge Cases**: Boundary test coverage
@@ -79,15 +81,18 @@ export OPENAI_API_KEY="sk-..."
 ### Which Model Should I Use?
 
 **For Learning/Testing:**
+
 - Use `enhanced-mock` - free, offline, generates good examples
 
 **For Production:**
+
 - **Best Quality**: `claude-3.5-sonnet` - excellent code, thorough tests
 - **Best Speed**: `gemini-2.0-flash` - fastest generation
 - **Best Balance**: `gpt-4o` - great quality, good speed
 - **Best Budget**: `gpt-4o-mini` - 97% cheaper than GPT-4
 
 **For Privacy:**
+
 - Use `ollama:deepseek-coder` - runs locally, no API calls
 
 ### Cost Comparison (per 100 endpoints)
@@ -148,7 +153,7 @@ func TestPOSTPosts(t *testing.T) {
 
 Each test includes metadata showing quality:
 
-```
+```text
 Metadata:
 - completeness: 100.0
 - security_score: 85.0
@@ -201,6 +206,7 @@ export OPENAI_API_KEY="sk-..."
 ## Troubleshooting
 
 ### "API key missing"
+
 ```bash
 # Make sure you export the key
 export OPENAI_API_KEY="sk-..."
@@ -209,6 +215,7 @@ export OPENAI_API_KEY="sk-..."
 ```
 
 ### "Model not supported"
+
 ```bash
 # Use one of the supported models:
 --ai-models=gpt-4o                # Modern OpenAI
@@ -218,6 +225,7 @@ export OPENAI_API_KEY="sk-..."
 ```
 
 ### "Too expensive"
+
 ```bash
 # Use the budget option
 --ai-models=gpt-4o-mini  # 97% cheaper than GPT-4
@@ -230,18 +238,21 @@ export OPENAI_API_KEY="sk-..."
 ## What's Different from Old Version?
 
 ### Before (2024)
+
 ```bash
 # Old models, basic tests
 ./build/glens analyze spec.json --ai-models=gpt4
 ```
 
 ### Now (2026)
+
 ```bash
 # Modern models, comprehensive tests with quality metrics
 ./build/glens analyze spec.json --ai-models=gpt-4o
 ```
 
 **Improvements:**
+
 - ✅ 50% faster (modern models)
 - ✅ 80% cheaper (gpt-4o-mini)
 - ✅ Better offline testing (enhanced-mock)

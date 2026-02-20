@@ -37,6 +37,7 @@ ollama pull codellama:7b-instruct
 ```
 
 **Why PetStore?**
+
 - ✅ Simple, well-documented API
 - ✅ Standard CRUD operations
 - ✅ Multiple content types
@@ -44,6 +45,7 @@ ollama pull codellama:7b-instruct
 - ✅ Perfect for learning
 
 **Expected Results:**
+
 - ~20 endpoints identified
 - Tests generated for each endpoint
 - Health score: 30-40% (without execution)
@@ -61,6 +63,7 @@ ollama pull codellama:7b-instruct
 ```
 
 **Why JSONPlaceholder?**
+
 - ✅ Actual working API (typicode.com)
 - ✅ Free, no authentication
 - ✅ Can execute tests against live endpoints
@@ -78,6 +81,7 @@ ollama pull codellama:7b-instruct
 ```
 
 **Why GitHub API?**
+
 - ✅ Real-world complexity
 - ✅ OAuth authentication
 - ✅ Pagination examples
@@ -85,6 +89,7 @@ ollama pull codellama:7b-instruct
 - ⚠️ May take 10-30 minutes to analyze
 
 **Expected Results:**
+
 - 300+ endpoints identified
 - AI model comparison
 - Complex parameter handling
@@ -102,6 +107,7 @@ ollama pull codellama:7b-instruct
 ```
 
 **Why Stripe?**
+
 - ✅ Production-quality API design
 - ✅ Complex schemas
 - ✅ Excellent documentation
@@ -119,6 +125,7 @@ ollama pull codellama:7b-instruct
 ```
 
 **Why OpenWeatherMap?**
+
 - ✅ Free API key available
 - ✅ Simple authentication (API key)
 - ✅ Can test against live endpoints
@@ -165,12 +172,14 @@ cat reports/petstore_gpt4.md
 ### What to Look For
 
 1. **Parsing Success**
-   ```
+
+   ```text
    11:52PM INF OpenAPI specification parsed successfully endpoints_count=20
    ```
 
 2. **Test Generation**
-   ```
+
+   ```text
    11:52PM INF Generating tests with AI model ai_model=gpt4
    ```
 
@@ -212,6 +221,7 @@ cat reports/petstore_gpt4.md
 ```
 
 **What happens:**
+
 1. Tests are generated for each endpoint
 2. Tests are compiled and executed
 3. HTTP requests are made to live API
@@ -219,6 +229,7 @@ cat reports/petstore_gpt4.md
 5. Pass/fail status recorded
 
 **Note**: Test execution can take several minutes depending on:
+
 - Number of endpoints
 - API response times
 - Network latency
@@ -245,6 +256,7 @@ export GITHUB_REPOSITORY="your/repo"
 ```
 
 **Example Issue Content:**
+
 ```markdown
 # Test Failure: GET /users/{id}
 
@@ -271,6 +283,7 @@ Error: failed to fetch from URL: dial tcp: lookup api.example.com
 ```
 
 **Solutions:**
+
 - Check internet connection
 - Verify URL is correct
 - Try downloading spec locally first
@@ -283,6 +296,7 @@ Error: failed to generate with OpenAI: 401 Unauthorized
 ```
 
 **Solutions:**
+
 - Verify API key is set correctly
 - Check API key has sufficient credits
 - Try a different AI model
@@ -294,6 +308,7 @@ Error: test execution timed out after 2m
 ```
 
 **Solutions:**
+
 - Increase timeout in config
 - Run without `--run-tests` first
 - Test specific endpoints with `--op-id`
@@ -349,11 +364,13 @@ cat reports/report.md
 ### PetStore API (20 endpoints)
 
 **With Mock Client:**
+
 - Parsing: ✅ 100% success
 - Test Generation: ✅ 20/20 endpoints
 - Code Quality: ⚠️ Basic (mock generates simple tests)
 
 **With GPT-4:**
+
 - Parsing: ✅ 100% success
 - Test Generation: ✅ 20/20 endpoints
 - Code Quality: ✅ Excellent (comprehensive test scenarios)
@@ -361,12 +378,14 @@ cat reports/report.md
 - Security Tests: ✅ Included
 
 **With Claude:**
+
 - Parsing: ✅ 100% success
 - Test Generation: ✅ 20/20 endpoints
 - Code Quality: ✅ Excellent (well-structured)
 - Documentation: ✅ Better comments
 
 **With Ollama (codellama):**
+
 - Parsing: ✅ 100% success
 - Test Generation: ✅ 20/20 endpoints
 - Code Quality: ⚠️ Variable (depends on prompt)
@@ -376,6 +395,7 @@ cat reports/report.md
 ## Conclusion
 
 Glens can successfully test against public APIs when you have:
+
 1. ✅ A valid OpenAPI specification (URL or file)
 2. ✅ An AI API key (or local Ollama)
 3. ✅ (Optional) GitHub access for issue creation
@@ -386,6 +406,7 @@ The mock client in this repository demonstrates the framework works. For product
 ## Getting Help
 
 If you encounter issues:
+
 1. Run with `--debug` flag
 2. Check execution logs
 3. Review generated reports

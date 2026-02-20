@@ -9,11 +9,13 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ### 1. Latest AI Models Support (2026)
 
 #### Current State
+
 - GPT-4 Turbo (older model)
 - Claude 3 Sonnet
 - Gemini 1.5
 
 #### Modernized
+
 - **GPT-4o** (OpenAI's latest, faster, cheaper)
 - **GPT-4o-mini** (cost-effective option)
 - **Claude 3.5 Sonnet** (Anthropic's best for code)
@@ -25,10 +27,12 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ### 2. Enhanced Mock Client
 
 #### Current
+
 - Basic static test generation
 - Simple template-based
 
 #### Improved
+
 - **Smart Templates**: Context-aware test generation
 - **Multiple Test Patterns**: CRUD, Auth, Pagination, etc.
 - **Edge Case Coverage**: Automatic boundary testing
@@ -37,6 +41,7 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ### 3. Streaming Support
 
 #### New Feature
+
 - Real-time test generation progress
 - Incremental updates
 - Better user feedback
@@ -44,6 +49,7 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ### 4. Test Quality Metrics
 
 #### New Metrics
+
 - **Code Coverage Estimation**: Predict coverage percentage
 - **Test Completeness Score**: How comprehensive are tests?
 - **Security Score**: Security test coverage
@@ -52,6 +58,7 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ### 5. Caching & Performance
 
 #### New Features
+
 - **Response Caching**: Cache AI responses for identical endpoints
 - **Batch Processing**: Generate multiple tests in parallel
 - **Smart Rate Limiting**: Optimize API usage
@@ -59,6 +66,7 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ### 6. Simplified UX
 
 #### Improvements
+
 - **Interactive CLI**: Guided setup wizard
 - **Better Error Messages**: Clear, actionable feedback
 - **Progress Indicators**: Visual feedback during generation
@@ -67,22 +75,26 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ## Implementation Phases
 
 ### Phase 1: Model Modernization (Immediate)
+
 - [ ] Add GPT-4o support
 - [ ] Add Claude 3.5 Sonnet
 - [ ] Add Gemini 2.0 models
 - [ ] Update mock client with better templates
 
 ### Phase 2: Enhanced Features (Short-term)
+
 - [ ] Implement streaming support
 - [ ] Add quality metrics
 - [ ] Improve mock client intelligence
 
 ### Phase 3: Performance & UX (Mid-term)
+
 - [ ] Add caching layer
 - [ ] Create interactive CLI
 - [ ] Implement batch processing
 
 ### Phase 4: Advanced Features (Long-term)
+
 - [ ] Auto-learning from feedback
 - [ ] Custom model fine-tuning support
 - [ ] Integration with CI/CD
@@ -90,12 +102,14 @@ This document outlines the modernization and optimization of Glens' AI-powered t
 ## Benefits
 
 ### For Users
+
 - ✅ **Better Test Quality**: More comprehensive, realistic tests
 - ✅ **Lower Costs**: Support for cheaper, faster models
 - ✅ **Faster Results**: Streaming and caching
 - ✅ **Easier to Use**: Simplified setup and better UX
 
 ### For the Project
+
 - ✅ **Future-Proof**: Latest AI capabilities
 - ✅ **Competitive**: Best-in-class features
 - ✅ **Maintainable**: Clean, modern architecture
@@ -167,12 +181,14 @@ type TestQualityMetrics struct {
 ## Testing the Improvements
 
 ### Before
+
 ```bash
 # Old way - basic
 ./build/glens analyze spec.json --ai-models=gpt4
 ```
 
 ### After
+
 ```bash
 # New way - modern, clear
 ./build/glens analyze spec.json \
@@ -185,12 +201,14 @@ type TestQualityMetrics struct {
 ## Documentation Updates
 
 ### Simplified README
+
 - Clear 3-step quickstart
 - Modern model recommendations
 - Cost comparison table
 - Performance benchmarks
 
 ### Interactive Setup
+
 ```bash
 ./build/glens init
 # Walks through:

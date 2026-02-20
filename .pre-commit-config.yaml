@@ -38,10 +38,11 @@ repos:
         pass_filenames: true
       - id: markdownlint
         name: markdownlint
-        entry: markdownlint-cli2 **/*.md
+        entry: markdownlint
+        args: ["**/*.md"]
         files: ".*\\.md$"
         language: system
-        pass_filenames: true
+        pass_filenames: false
       - id: yamlfmt
         name: yamlfmt
         entry: bash

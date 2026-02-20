@@ -2,7 +2,9 @@
 
 ## Executive Summary
 
-This report evaluates the accuracy of Glens in generating correct integration test cases from OpenAPI specifications. The testing was conducted in a sandboxed environment using a deterministic mock AI client.
+This report evaluates the accuracy of Glens in generating correct integration test cases
+from OpenAPI specifications. The testing was conducted in a sandboxed environment
+using a deterministic mock AI client.
 
 ## Testing Approach
 
@@ -36,7 +38,7 @@ We created a sample OpenAPI 3.0.3 specification with:
 
 ### Results
 
-```
+```text
 ╔═══════════════════════════════════════════════════════════╗
 ║                   TEST SUMMARY                            ║
 ╚═══════════════════════════════════════════════════════════╝
@@ -108,6 +110,7 @@ func TestGETUsers(t *testing.T) {
 ### Test Quality Analysis
 
 **Strengths:**
+
 - ✅ Proper package declaration
 - ✅ Correct imports (testify/assert, testify/require)
 - ✅ Well-structured test function naming
@@ -117,6 +120,7 @@ func TestGETUsers(t *testing.T) {
 - ✅ Clear assertions with descriptive messages
 
 **Areas for Enhancement (with Real AI):**
+
 - 🔄 Request body validation for POST/PUT endpoints
 - 🔄 Response body structure validation
 - 🔄 Authentication header handling
@@ -129,6 +133,7 @@ func TestGETUsers(t *testing.T) {
 ### 1. OpenAPI Parsing
 
 Glens successfully:
+
 - Parses OpenAPI 3.0.3 JSON specifications
 - Extracts endpoint paths and HTTP methods
 - Identifies operation IDs
@@ -138,6 +143,7 @@ Glens successfully:
 ### 2. Test Code Generation
 
 Glens generates:
+
 - Valid Go test functions
 - Proper framework imports (testify)
 - Structured test cases with subtests
@@ -148,6 +154,7 @@ Glens generates:
 ### 3. Reporting
 
 Glens provides:
+
 - Comprehensive markdown reports
 - Endpoint-by-endpoint analysis
 - Health score calculations
@@ -181,6 +188,7 @@ To fully evaluate Glens accuracy against public APIs, we recommend:
 ### 2. Compare AI Models
 
 Test the same API with different models:
+
 - **GPT-4**: Generally high quality, good edge case coverage
 - **Claude (Sonnet)**: Strong code structure, detailed tests
 - **Gemini (Flash)**: Fast generation, good for simple endpoints
@@ -198,6 +206,7 @@ Test the same API with different models:
 ```
 
 This will:
+
 1. Generate tests for each endpoint
 2. Execute tests against the live API
 3. Create GitHub issues ONLY for failed tests
@@ -301,6 +310,7 @@ export GITHUB_REPOSITORY="owner/repo"
 ## Contact & Support
 
 For issues or questions about accuracy testing:
+
 1. Review the logs in `accuracy_tests/run_<timestamp>/`
 2. Check the [DEVELOPMENT.md](docs/DEVELOPMENT.md) guide
 3. Open an issue on GitHub with accuracy test results

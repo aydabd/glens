@@ -9,11 +9,13 @@ This directory contains OpenAPI specification files used for testing Glens' accu
 A simple OpenAPI 3.0.3 specification demonstrating basic CRUD operations.
 
 **Endpoints:**
+
 - `GET /users` - List all users
 - `GET /users/{id}` - Get a specific user by ID
 - `POST /posts` - Create a new post
 
 **Features:**
+
 - Path parameters
 - Query parameters
 - Multiple response codes
@@ -93,17 +95,20 @@ openapi-generator validate -i test_specs/your_spec.json
 ## Test Complexity Levels
 
 ### Level 1: Basic (Current)
+
 - Simple GET/POST endpoints
 - Basic parameters
 - Standard response codes
 
 ### Level 2: Intermediate (Future)
+
 - Authentication (OAuth, API keys)
 - Complex request bodies
 - Multiple content types
 - Pagination
 
 ### Level 3: Advanced (Future)
+
 - Webhooks
 - Callbacks
 - Complex schemas with $ref
@@ -119,6 +124,7 @@ openapi-generator validate -i test_specs/your_spec.json
 ## Contributing
 
 When adding test specs:
+
 1. Use realistic API designs
 2. Include diverse endpoint patterns
 3. Add complex scenarios gradually
@@ -127,4 +133,4 @@ When adding test specs:
 
 ---
 
-*Test specifications are used for validating Glens' parsing and test generation capabilities*
+Test specifications are used for validating Glens' parsing and test generation capabilities.
