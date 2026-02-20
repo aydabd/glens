@@ -1,5 +1,5 @@
 go 1.25
 
-use .
+use ./cmd/glens
 use ./cmd/tools/demo
 use ./cmd/tools/accuracy

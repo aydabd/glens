@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"glens/internal/github"
+	"glens/tools/glens/internal/github"
 )
 
 var cleanupCmd = &cobra.Command{

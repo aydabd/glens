@@ -9,11 +9,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"glens/internal/ai"
-	"glens/internal/generator"
-	"glens/internal/github"
-	"glens/internal/parser"
-	"glens/internal/reporter"
+	"glens/tools/glens/internal/ai"
+	"glens/tools/glens/internal/generator"
+	"glens/tools/glens/internal/github"
+	"glens/tools/glens/internal/parser"
+	"glens/tools/glens/internal/reporter"
 )
 
 var analyzeCmd = &cobra.Command{

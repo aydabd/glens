@@ -12,7 +12,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // GoogleClient implements the Client interface for Google Gemini models

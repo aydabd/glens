@@ -1,7 +1,7 @@
 package main
 
 import (
-	"glens/cmd"
+	"glens/tools/glens/cmd"
 )
 
 func main() {

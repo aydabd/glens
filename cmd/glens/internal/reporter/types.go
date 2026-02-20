@@ -3,8 +3,8 @@ package reporter
 import (
 	"time"
 
-	"glens/internal/generator"
-	"glens/internal/parser"
+	"glens/tools/glens/internal/generator"
+	"glens/tools/glens/internal/parser"
 )
 
 // Report represents the final comprehensive report

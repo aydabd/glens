@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // fixMarkdownListSpacing ensures lists in markdown text have proper blank lines
