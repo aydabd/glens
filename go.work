@@ -1,0 +1,5 @@
+go 1.25
+
+use .
+use ./cmd/tools/demo
+use ./cmd/tools/accuracy
