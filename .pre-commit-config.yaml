@@ -38,10 +38,11 @@ repos:
         pass_filenames: true
       - id: markdownlint
         name: markdownlint
-        entry: markdownlint-cli2 **/*.md
+        entry: markdownlint
+        args: ["**/*.md"]
         files: ".*\\.md$"
         language: system
-        pass_filenames: true
+        pass_filenames: false
       - id: yamlfmt
         name: yamlfmt
         entry: bash
@@ -57,9 +58,9 @@ repos:
         entry: bash
         args:
           - -c
-          - 'if [ "$LINT_MODE" = "check" ]; then if ! prettier --check "**/*.{json,md,yml,yaml}" 2>/dev/null; then echo "❌ Files need formatting. Run: prettier -w \"**/*.{json,md,yml,yaml}\""; exit 1; fi; else echo "🛠️ Formatting with prettier..."; prettier -w "**/*.{json,md,yml,yaml}"; fi'
+          - 'if [ "$LINT_MODE" = "check" ]; then if ! prettier --check "**/*.json" 2>/dev/null; then echo "❌ Files need formatting. Run: prettier -w \"**/*.json\""; exit 1; fi; else echo "🛠️ Formatting with prettier..."; prettier -w "**/*.json"; fi'
         language: system
-        files: ".*\\.(json|md|yml|yaml)$"
+        files: ".*\\.json$"
         always_run: true
         pass_filenames: false
       - id: hadolint

@@ -31,7 +31,7 @@ func NewEnhancedMockClient(modelName string) *EnhancedMockClient {
 	if modelName == "" {
 		modelName = "enhanced-mock"
 	}
-	
+
 	client := &EnhancedMockClient{
 		modelName:       modelName,
 		enableSecurity:  true,
@@ -39,26 +39,26 @@ func NewEnhancedMockClient(modelName string) *EnhancedMockClient {
 		enableStreaming: false,
 		patterns:        make(map[string]TestPattern),
 	}
-	
+
 	// Initialize patterns
 	client.initializePatterns()
-	
+
 	return client
 }
 
 // GenerateTest generates an enhanced mock test
 func (c *EnhancedMockClient) GenerateTest(_ context.Context, endpoint *parser.Endpoint) (*TestGenerationResult, error) {
 	startTime := time.Now()
-	
+
 	// Select appropriate pattern based on endpoint
 	pattern := c.selectPattern(endpoint)
-	
+
 	// Generate test code using pattern
 	testCode := c.generateEnhancedTestCode(endpoint, pattern)
-	
+
 	// Calculate quality metrics
 	metrics := c.calculateQualityMetrics(testCode, endpoint)
-	
+
 	result := &TestGenerationResult{
 		TestCode:       testCode,
 		Prompt:         c.buildPrompt(endpoint),
@@ -78,7 +78,7 @@ func (c *EnhancedMockClient) GenerateTest(_ context.Context, endpoint *parser.En
 			"overall_quality":  fmt.Sprintf("%.1f", metrics.OverallScore),
 		},
 	}
-	
+
 	return result, nil
 }
 
@@ -106,19 +106,19 @@ func (c *EnhancedMockClient) initializePatterns() {
 		Description: "Tests for GET endpoints",
 		Scenarios:   []string{"success", "not_found", "invalid_params", "auth"},
 	}
-	
+
 	c.patterns["crud_create"] = TestPattern{
 		Name:        "CRUD Create",
 		Description: "Tests for POST endpoints",
 		Scenarios:   []string{"success", "invalid_data", "duplicate", "auth"},
 	}
-	
+
 	c.patterns["crud_update"] = TestPattern{
 		Name:        "CRUD Update",
 		Description: "Tests for PUT/PATCH endpoints",
 		Scenarios:   []string{"success", "not_found", "invalid_data", "auth"},
 	}
-	
+
 	c.patterns["crud_delete"] = TestPattern{
 		Name:        "CRUD Delete",
 		Description: "Tests for DELETE endpoints",
@@ -129,7 +129,7 @@ func (c *EnhancedMockClient) initializePatterns() {
 // selectPattern chooses the appropriate test pattern
 func (c *EnhancedMockClient) selectPattern(endpoint *parser.Endpoint) TestPattern {
 	method := strings.ToUpper(endpoint.Method)
-	
+
 	switch method {
 	case "GET":
 		return c.patterns["crud_read"]
@@ -147,7 +147,7 @@ func (c *EnhancedMockClient) selectPattern(endpoint *parser.Endpoint) TestPatter
 // identifyCategories identifies test categories for the endpoint
 func (c *EnhancedMockClient) identifyCategories(endpoint *parser.Endpoint) []string {
 	categories := []string{"integration", "api"}
-	
+
 	// Add method-specific categories
 	method := strings.ToUpper(endpoint.Method)
 	switch method {
@@ -160,26 +160,26 @@ func (c *EnhancedMockClient) identifyCategories(endpoint *parser.Endpoint) []str
 	case "DELETE":
 		categories = append(categories, "delete", "mutation")
 	}
-	
+
 	// Add security category if enabled
 	if c.enableSecurity {
 		categories = append(categories, "security", "auth")
 	}
-	
+
 	// Add edge cases category if enabled
 	if c.enableEdgeCases {
 		categories = append(categories, "edge-cases", "boundary")
 	}
-	
+
 	return categories
 }
 
 // generateEnhancedTestCode creates comprehensive test code
 func (c *EnhancedMockClient) generateEnhancedTestCode(endpoint *parser.Endpoint, pattern TestPattern) string {
 	testName := fmt.Sprintf("Test%s%s", capitalize(endpoint.Method), sanitizePath(endpoint.Path))
-	
+
 	var testCases strings.Builder
-	
+
 	// Add header
 	testCases.WriteString("package main\n\n")
 	testCases.WriteString("import (\n")
@@ -189,31 +189,31 @@ func (c *EnhancedMockClient) generateEnhancedTestCode(endpoint *parser.Endpoint,
 	testCases.WriteString("\t\"github.com/stretchr/testify/assert\"\n")
 	testCases.WriteString("\t\"github.com/stretchr/testify/require\"\n")
 	testCases.WriteString(")\n\n")
-	
+
 	// Add main test function
 	fmt.Fprintf(&testCases, "// %s tests the %s %s endpoint\n", testName, endpoint.Method, endpoint.Path)
 	fmt.Fprintf(&testCases, "// Pattern: %s\n", pattern.Name)
 	fmt.Fprintf(&testCases, "func %s(t *testing.T) {\n", testName)
 	testCases.WriteString("\tbaseURL := \"http://localhost:8080\"\n")
 	fmt.Fprintf(&testCases, "\tendpoint := \"%s\"\n\n", endpoint.Path)
-	
+
 	// Add test scenarios
 	c.addSuccessTest(&testCases, endpoint)
-	
+
 	if c.enableEdgeCases {
 		c.addEdgeCaseTests(&testCases, endpoint)
 	}
-	
+
 	c.addErrorTests(&testCases, endpoint)
-	
+
 	if c.enableSecurity {
 		c.addSecurityTests(&testCases, endpoint)
 	}
-	
+
 	c.addPerformanceTest(&testCases, endpoint)
-	
+
 	testCases.WriteString("}\n")
-	
+
 	return testCases.String()
 }
 
@@ -306,14 +306,14 @@ func (c *EnhancedMockClient) addPerformanceTest(sb *strings.Builder, endpoint *p
 
 // buildPrompt creates a comprehensive prompt
 func (c *EnhancedMockClient) buildPrompt(endpoint *parser.Endpoint) string {
-	return fmt.Sprintf("Generate comprehensive integration test for %s %s with security and edge cases", 
+	return fmt.Sprintf("Generate comprehensive integration test for %s %s with security and edge cases",
 		endpoint.Method, endpoint.Path)
 }
 
 // calculateQualityMetrics estimates test quality
 func (c *EnhancedMockClient) calculateQualityMetrics(testCode string, _ *parser.Endpoint) TestQualityMetrics {
 	metrics := TestQualityMetrics{}
-	
+
 	// Completeness: based on test scenarios covered
 	scenarios := 0
 	if strings.Contains(testCode, "Success") {
@@ -332,7 +332,7 @@ func (c *EnhancedMockClient) calculateQualityMetrics(testCode string, _ *parser.
 		scenarios++
 	}
 	metrics.Completeness = float64(scenarios) * 20.0 // 5 scenarios = 100%
-	
+
 	// Security coverage
 	if strings.Contains(testCode, "Unauthorized") {
 		metrics.SecurityCoverage = 70.0
@@ -340,21 +340,21 @@ func (c *EnhancedMockClient) calculateQualityMetrics(testCode string, _ *parser.
 	if strings.Contains(testCode, "Authorization") {
 		metrics.SecurityCoverage = 85.0
 	}
-	
+
 	// Edge case coverage
 	if strings.Contains(testCode, "EdgeCases") {
 		metrics.EdgeCaseCoverage = 75.0
 	}
-	
+
 	// Maintainability: based on structure
 	if strings.Contains(testCode, "t.Run") {
 		metrics.Maintainability = 80.0
 	}
-	
+
 	// Overall score
-	metrics.OverallScore = (metrics.Completeness + metrics.SecurityCoverage + 
+	metrics.OverallScore = (metrics.Completeness + metrics.SecurityCoverage +
 		metrics.EdgeCaseCoverage + metrics.Maintainability) / 4.0
-	
+
 	return metrics
 }
 
@@ -366,4 +366,3 @@ type TestQualityMetrics struct {
 	Maintainability  float64
 	OverallScore     float64
 }
-

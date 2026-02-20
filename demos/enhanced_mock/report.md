@@ -41,7 +41,7 @@
 
 ### Servers
 
-- **https://api.example.com/v1**
+- **<https://api.example.com/v1>**
 
 ### Endpoint Breakdown
 
@@ -140,7 +140,7 @@ Total Models Evaluated: 1
 
 **Test Results by Model:**
 
-##### Model: enhanced-mock
+##### Model: enhanced-mock (GET /users/{id})
 
 - **Quality Score:** 0.0
 - **Framework:** testify
@@ -154,7 +154,7 @@ Total Models Evaluated: 1
 
 **Test Results by Model:**
 
-##### Model: enhanced-mock
+##### Model: enhanced-mock (POST /posts)
 
 - **Quality Score:** 0.0
 - **Framework:** testify

@@ -142,20 +142,20 @@ cat << 'TESTCODE'
 func TestPOSTPosts(t *testing.T) {
     baseURL := "http://localhost:8080"
     endpoint := "/posts"
-    
+
     // Test: Success scenario
     t.Run("Success", func(t *testing.T) {
         req, err := http.NewRequest("POST", baseURL+endpoint, nil)
         require.NoError(t, err)
-        
+
         client := &http.Client{Timeout: 10 * time.Second}
         resp, err := client.Do(req)
         require.NoError(t, err)
         defer resp.Body.Close()
-        
+
         assert.Equal(t, http.StatusCreated, resp.StatusCode)
     })
-    
+
     // Test: Security scenarios
     t.Run("Security", func(t *testing.T) {
         t.Run("Unauthorized", func(t *testing.T) {
@@ -163,7 +163,7 @@ func TestPOSTPosts(t *testing.T) {
             // Expects 401 or 403
         })
     })
-    
+
     // Test: Performance
     t.Run("Performance", func(t *testing.T) {
         // Validates response time < 2s
@@ -215,4 +215,3 @@ echo ""
 
 echo -e "${GREEN}✨ Modern AI testing made simple! ✨${NC}"
 echo ""
-

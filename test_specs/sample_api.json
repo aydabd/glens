@@ -4,14 +4,14 @@
     "title": "Sample API",
     "version": "1.0.0"
   },
-  "servers": [{"url": "https://api.example.com/v1"}],
+  "servers": [{ "url": "https://api.example.com/v1" }],
   "paths": {
     "/users": {
       "get": {
         "summary": "List users",
         "operationId": "listUsers",
         "responses": {
-          "200": {"description": "Success"}
+          "200": { "description": "Success" }
         }
       }
     },
@@ -19,15 +19,17 @@
       "get": {
         "summary": "Get user",
         "operationId": "getUser",
-        "parameters": [{
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "schema": {"type": "string"}
-        }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
         "responses": {
-          "200": {"description": "Success"},
-          "404": {"description": "Not found"}
+          "200": { "description": "Success" },
+          "404": { "description": "Not found" }
         }
       }
     },
@@ -36,7 +38,7 @@
         "summary": "Create post",
         "operationId": "createPost",
         "responses": {
-          "201": {"description": "Created"}
+          "201": { "description": "Created" }
         }
       }
     }

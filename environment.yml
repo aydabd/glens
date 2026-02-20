@@ -20,33 +20,32 @@ dependencies:
   - ca-certificates
   - openssl
 
-  # Local LLM support
-  - ollama
-
   # Optional: useful for development
   - tree
   - htop
   - ripgrep
 
-  # Node.js (for potential web UI or additional tooling)
+  # Node.js (provides npm for installing markdownlint-cli, prettier, etc.)
   - nodejs=22.*
 
-  # Python (for potential automation scripts)
+  # Python (for pre-commit and automation scripts)
   - python=3.13.*
 
-  # Linters and formatters
-  - pre-commit
-  - markdownlint-cli2
-  - prettier
-  - yamlfmt
+  # Linters and formatters available on conda-forge
   - shellcheck
+
+  # Note: the following tools are installed via their native package managers
+  # inside this environment after creation (see make setup or CI workflow):
+  #   npm install -g markdownlint-cli prettier
+  #   go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+  #   pip install pre-commit
 
 # Environment variables
 variables:
   # Go configuration
   GOPROXY: "https://proxy.golang.org,direct"
   GOSUMDB: "sum.golang.org"
-  CGO_ENABLED: "1"
+  CGO_ENABLED: "0"
 
   # Development settings
   DEVELOPMENT: "true"

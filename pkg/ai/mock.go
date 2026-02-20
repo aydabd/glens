@@ -76,31 +76,31 @@ func Test%s%s(t *testing.T) {
 	// Setup
 	baseURL := "http://localhost:8080"
 	endpoint := "%s"
-	
+
 	// Test: Valid request
 	t.Run("ValidRequest", func(t *testing.T) {
 		req, err := http.NewRequest("%s", baseURL+endpoint, nil)
 		require.NoError(t, err)
-		
+
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
-		
+
 		// Verify status code
 		assert.Equal(t, http.StatusOK, resp.StatusCode, "Expected 200 OK status")
 	})
-	
+
 	// Test: Invalid endpoint (404)
 	t.Run("InvalidEndpoint", func(t *testing.T) {
 		req, err := http.NewRequest("%s", baseURL+"/invalid/endpoint", nil)
 		require.NoError(t, err)
-		
+
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
-		
+
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode, "Expected 404 Not Found")
 	})
 }
@@ -135,13 +135,13 @@ func capitalize(s string) string {
 func sanitizePath(path string) string {
 	result := ""
 	nextUpper := true
-	
+
 	for _, r := range path {
 		if r == '/' || r == '{' || r == '}' || r == '-' {
 			nextUpper = true
 			continue
 		}
-		
+
 		if nextUpper && r >= 'a' && r <= 'z' {
 			result += string(r - 32)
 			nextUpper = false
@@ -150,10 +150,10 @@ func sanitizePath(path string) string {
 			nextUpper = false
 		}
 	}
-	
+
 	if result == "" {
 		result = "Root"
 	}
-	
+
 	return result
 }

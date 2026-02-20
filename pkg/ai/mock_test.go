@@ -89,11 +89,11 @@ func TestEnhancedMockClient_GetCapabilities(t *testing.T) {
 
 func TestEnhancedMockClient_GenerateTest_Scenarios(t *testing.T) {
 	tests := []struct {
-		name            string
-		method          string
-		path            string
-		wantTestFunc    string
-		wantScenarios   []string
+		name          string
+		method        string
+		path          string
+		wantTestFunc  string
+		wantScenarios []string
 	}{
 		{
 			name:         "GET users",
