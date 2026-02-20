@@ -5,10 +5,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
 	"glens/pkg/logging"
 )
 
-func TestSetup_defaults(_ *testing.T) {
+func TestSetup_defaults(t *testing.T) {
+	prevLogger := log.Logger
+	prevLevel := zerolog.GlobalLevel()
+	t.Cleanup(func() {
+		log.Logger = prevLogger
+		zerolog.SetGlobalLevel(prevLevel)
+	})
+
 	var buf bytes.Buffer
 	logging.Setup(logging.Config{
 		Level:  logging.LevelInfo,
@@ -18,7 +28,14 @@ func TestSetup_defaults(_ *testing.T) {
 	// No panic is the primary assertion; global logger is reconfigured.
 }
 
-func TestSetup_console(_ *testing.T) {
+func TestSetup_console(t *testing.T) {
+	prevLogger := log.Logger
+	prevLevel := zerolog.GlobalLevel()
+	t.Cleanup(func() {
+		log.Logger = prevLogger
+		zerolog.SetGlobalLevel(prevLevel)
+	})
+
 	var buf bytes.Buffer
 	logging.Setup(logging.Config{
 		Level:  logging.LevelDebug,

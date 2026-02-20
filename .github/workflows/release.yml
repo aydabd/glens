@@ -44,6 +44,7 @@ jobs:
           EXT=""
           if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
           BINARY="glens-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
+          mkdir -p dist
           go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
             -o "dist/${BINARY}" .
 
@@ -91,6 +92,7 @@ jobs:
           EXT=""
           if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
           BINARY="glens-demo-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
+          mkdir -p ../../dist
           go build -ldflags="-s -w" -o "../../dist/${BINARY}" .
 
       - uses: actions/upload-artifact@v4
@@ -137,6 +139,7 @@ jobs:
           EXT=""
           if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
           BINARY="glens-accuracy-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
+          mkdir -p ../../dist
           go build -ldflags="-s -w" -o "../../dist/${BINARY}" .
 
       - uses: actions/upload-artifact@v4
