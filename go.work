@@ -1,5 +1,6 @@
 go 1.25
 
+use ./pkg/logging
 use ./cmd/glens
 use ./cmd/tools/demo
 use ./cmd/tools/accuracy

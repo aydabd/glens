@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"glens/tools/glens/pkg/logging"
+	"glens/pkg/logging"
 )
 
 func TestSetup_defaults(t *testing.T) {

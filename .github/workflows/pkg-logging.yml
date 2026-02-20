@@ -1,0 +1,61 @@
+name: pkg/logging CI
+
+on:
+  pull_request:
+    paths:
+      - "pkg/logging/**"
+      - "go.work"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "pkg/logging/**"
+      - "go.work"
+
+env:
+  GO_VERSION: "1.25"
+
+jobs:
+  build:
+    name: Build & Vet
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: pkg/logging
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: pkg/logging/go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: pkg/logging
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: pkg/logging/go.mod
+
+      - name: Test
+        run: go test -v -race ./...
