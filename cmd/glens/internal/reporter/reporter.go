@@ -118,7 +118,7 @@ func generateSummary(spec *parser.OpenAPISpec, results []EndpointResult) Summary
 	summary.TotalIssuesCreated = issuesCreated
 
 	// Calculate execution summary
-	summary.ExecutionSummary = calculateExecutionSummary(executionTimes, generationTimes)
+	summary.ExecutionSummary = calculateExecutionSummary(executionTimes, generationTimes, passedTests, totalTests)
 
 	// Calculate overall health score
 	summary.OverallHealthScore = calculateOverallHealthScore(&summary)
@@ -127,7 +127,7 @@ func generateSummary(spec *parser.OpenAPISpec, results []EndpointResult) Summary
 }
 
 // calculateExecutionSummary calculates timing and performance statistics
-func calculateExecutionSummary(executionTimes, generationTimes []time.Duration) ExecutionSummary {
+func calculateExecutionSummary(executionTimes, generationTimes []time.Duration, passedTests, totalTests int) ExecutionSummary {
 	summary := ExecutionSummary{}
 
 	if len(executionTimes) > 0 {
@@ -159,9 +159,8 @@ func calculateExecutionSummary(executionTimes, generationTimes []time.Duration) 
 		summary.GenerationTime = total
 	}
 
-	// Calculate success rate (this would be more accurate with actual pass/fail data)
-	if len(executionTimes) > 0 {
-		summary.SuccessRate = 0.75 // Placeholder - should be calculated from actual results
+	if totalTests > 0 {
+		summary.SuccessRate = float64(passedTests) / float64(totalTests)
 	}
 
 	return summary
