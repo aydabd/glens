@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -73,6 +74,11 @@ func fetch(source string) ([]byte, error) {
 			return nil, fmt.Errorf("HTTP request failed: %w", err)
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			bodySnippet, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+			return nil, fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(bodySnippet)))
+		}
 		return io.ReadAll(resp.Body)
 	}
 	return os.ReadFile(source) //nolint:gosec
@@ -86,12 +92,9 @@ func countEndpoints(spec *minimalSpec) int {
 	return count
 }
 
-// specName derives a short display name from the file path.
+// specName derives a short display name from the file path, cross-platform.
 func specName(path string) string {
-	parts := strings.Split(path, "/")
-	name := parts[len(parts)-1]
-	if idx := strings.LastIndex(name, "."); idx > 0 {
-		name = name[:idx]
-	}
-	return name
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	return strings.TrimSuffix(base, ext)
 }

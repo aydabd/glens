@@ -49,6 +49,11 @@ func fetch(source string) ([]byte, error) {
 			return nil, fmt.Errorf("HTTP request failed: %w", err)
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			bodySnippet, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+			return nil, fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(bodySnippet)))
+		}
 		return io.ReadAll(resp.Body)
 	}
 	return os.ReadFile(source) //nolint:gosec
