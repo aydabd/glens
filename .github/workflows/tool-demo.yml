@@ -1,0 +1,61 @@
+name: Demo Tool CI
+
+on:
+  pull_request:
+    paths:
+      - "cmd/tools/demo/**"
+      - "go.work"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "cmd/tools/demo/**"
+      - "go.work"
+
+env:
+  GO_VERSION: "1.25"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cmd/tools/demo
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: cmd/tools/demo/go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cmd/tools/demo
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: cmd/tools/demo/go.mod
+
+      - name: Test
+        run: go test -short -v -race ./...

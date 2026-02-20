@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"glens/pkg/ai"
+	"glens/internal/ai"
 )
 
 var modelsCmd = &cobra.Command{

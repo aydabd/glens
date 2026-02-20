@@ -1,54 +1,34 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	"glens/tools/accuracy/internal/analyze"
+	"glens/tools/accuracy/internal/report"
 )
 
-func TestSpecName(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-	}{
-		{"test_specs/sample_api.json", "sample_api"},
-		{"api.yaml", "api"},
-		{"dir/sub/my_spec.json", "my_spec"},
-		{"noext", "noext"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			got := specName(tt.input)
-			if got != tt.want {
-				t.Errorf("specName(%q) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestBuildReport_empty(t *testing.T) {
-	report := buildReport(nil)
-	if !strings.Contains(report, "# Glens Accuracy Report") {
+func TestReport_empty(t *testing.T) {
+	out := report.Build(nil)
+	if !strings.Contains(out, "# Glens Accuracy Report") {
 		t.Error("report missing title")
 	}
 }
 
-func TestBuildReport_withResults(t *testing.T) {
-	results := []result{
-		{name: "sample_api", specPath: "test.json", endpoints: 3},
-		{name: "bad_spec", specPath: "bad.json", err: errMock("parse error")},
+func TestReport_withResults(t *testing.T) {
+	results := []analyze.Result{
+		{Name: "sample_api", SpecPath: "test.json", Endpoints: 3},
+		{Name: "bad_spec", SpecPath: "bad.json", Err: fmt.Errorf("parse error")}, //nolint:err113
 	}
-	report := buildReport(results)
-	if !strings.Contains(report, "sample_api") {
+	out := report.Build(results)
+	if !strings.Contains(out, "sample_api") {
 		t.Error("report missing spec name")
 	}
-	if !strings.Contains(report, "✅ Success") {
+	if !strings.Contains(out, "✅ Success") {
 		t.Error("report missing success marker")
 	}
-	if !strings.Contains(report, "❌ Failed") {
+	if !strings.Contains(out, "❌ Failed") {
 		t.Error("report missing failure marker")
 	}
 }
-
-type errMock string
-
-func (e errMock) Error() string { return string(e) }
