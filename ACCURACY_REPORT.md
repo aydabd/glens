@@ -77,31 +77,31 @@ func TestGETUsers(t *testing.T) {
 	// Setup
 	baseURL := "http://localhost:8080"
 	endpoint := "/users"
-	
+
 	// Test: Valid request
 	t.Run("ValidRequest", func(t *testing.T) {
 		req, err := http.NewRequest("GET", baseURL+endpoint, nil)
 		require.NoError(t, err)
-		
+
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
-		
+
 		// Verify status code
 		assert.Equal(t, http.StatusOK, resp.StatusCode, "Expected 200 OK status")
 	})
-	
+
 	// Test: Invalid endpoint (404)
 	t.Run("InvalidEndpoint", func(t *testing.T) {
 		req, err := http.NewRequest("GET", baseURL+"/invalid/endpoint", nil)
 		require.NoError(t, err)
-		
+
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
-		
+
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode, "Expected 404 Not Found")
 	})
 }

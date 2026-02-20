@@ -30,7 +30,7 @@ Our improved offline testing client now generates:
 Every test now includes quality scores:
 
 - **Completeness**: Test scenario coverage
-- **Security**: Security test coverage  
+- **Security**: Security test coverage
 - **Edge Cases**: Boundary test coverage
 - **Maintainability**: Code structure quality
 - **Overall Score**: Combined metric
@@ -123,25 +123,25 @@ func TestPOSTPosts(t *testing.T) {
         // Creates POST request
         // Validates 201 Created status
     })
-    
+
     // Test: Edge cases
     t.Run("EdgeCases", func(t *testing.T) {
         // Tests empty responses
         // Tests various content types
     })
-    
-    // Test: Error scenarios  
+
+    // Test: Error scenarios
     t.Run("Errors", func(t *testing.T) {
         // Tests 404 Not Found
         // Tests invalid endpoints
     })
-    
+
     // Test: Security scenarios
     t.Run("Security", func(t *testing.T) {
         // Tests unauthorized access
         // Tests missing auth headers
     })
-    
+
     // Test: Performance
     t.Run("Performance", func(t *testing.T) {
         // Validates response time < 2s

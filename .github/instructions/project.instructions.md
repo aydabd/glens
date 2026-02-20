@@ -5,7 +5,7 @@ applyTo: "**"
 # Glens Project – AI Agent Instructions
 
 > **Single source of truth** for all AI coding agents (GitHub Copilot, Claude Code,
-> OpenAI Codex, Cursor, and others).  
+> OpenAI Codex, Cursor, and others).
 > Edit **only this file** to update instructions across every agent.
 
 ## Project Overview

@@ -47,16 +47,16 @@ Created `pkg/ai/enhanced_mock.go` with:
 func TestPOSTPosts(t *testing.T) {
     // Test: Success scenario
     t.Run("Success", func(t *testing.T) { /* ... */ })
-    
+
     // Test: Edge cases
     t.Run("EdgeCases", func(t *testing.T) { /* ... */ })
-    
+
     // Test: Error scenarios
     t.Run("Errors", func(t *testing.T) { /* ... */ })
-    
+
     // Test: Security scenarios
     t.Run("Security", func(t *testing.T) { /* ... */ })
-    
+
     // Test: Performance
     t.Run("Performance", func(t *testing.T) { /* ... */ })
 }

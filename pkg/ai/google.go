@@ -315,7 +315,7 @@ func NewGoogleClientWithModel(modelName string) (*GoogleClient, error) {
 	if apiKey == "" {
 		return nil, ErrAPIKeyMissing{Model: "Google"}
 	}
-	
+
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
 	if projectID == "" {
 		projectID = "default-project" // Use a default if not specified

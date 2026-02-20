@@ -76,23 +76,26 @@ safe_percentage() {
 extract_metrics() {
     local report_file=$1
     local api_name=$2
-    
+
     if [ ! -f "${report_file}" ]; then
         return 1
     fi
-    
+
     # Extract metrics from report
-    local endpoints=$(grep -oP "Total Endpoints.*\*\* \| \K\d+" "${report_file}" 2>/dev/null || echo 0)
-    local tests_generated=$(grep -oP "Total Tests Generated.*\*\* \| \K\d+" "${report_file}" 2>/dev/null || echo 0)
-    local health_score=$(grep -oP "Overall Health Score.*\*\* \| \K[\d.]+" "${report_file}" 2>/dev/null || echo 0)
-    
+    local endpoints
+    local tests_generated
+    local health_score
+    endpoints=$(grep -oP "Total Endpoints.*\*\* \| \K\d+" "${report_file}" 2>/dev/null || echo 0)
+    tests_generated=$(grep -oP "Total Tests Generated.*\*\* \| \K\d+" "${report_file}" 2>/dev/null || echo 0)
+    health_score=$(grep -oP "Overall Health Score.*\*\* \| \K[\d.]+" "${report_file}" 2>/dev/null || echo 0)
+
     # Store metrics
     api_metrics["${api_name}_endpoints"]=${endpoints}
     api_metrics["${api_name}_generated"]=${tests_generated}
     api_metrics["${api_name}_health"]=${health_score}
-    
+
     total_endpoints=$((total_endpoints + endpoints))
-    
+
     echo -e "    ${MAGENTA}Endpoints:${NC} ${endpoints}"
     echo -e "    ${MAGENTA}Tests Generated:${NC} ${tests_generated}"
     echo -e "    ${MAGENTA}Health Score:${NC} ${health_score}%"
@@ -102,46 +105,46 @@ extract_metrics() {
 test_api() {
     local api_name=$1
     local api_path=$2
-    
+
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${YELLOW}Testing: ${api_name}${NC}"
     echo -e "${BLUE}Spec: ${api_path}${NC}"
     echo ""
-    
+
     local output_dir="${TEST_RUN_DIR}/${api_name}"
     mkdir -p "${output_dir}"
-    
+
     local report_file="${output_dir}/report.md"
     local log_file="${output_dir}/execution.log"
-    
+
     # Run glens analyze with mock AI model (no real API calls)
     echo -e "  ${CYAN}→ Running glens analyze with mock AI...${NC}"
-    
+
     if "${GLENS_BINARY}" analyze "${api_path}" \
         --ai-models=mock \
         --create-issues=false \
         --run-tests=false \
         --output="${report_file}" \
         --debug > "${log_file}" 2>&1; then
-        
+
         echo -e "  ${GREEN}✓ Analysis completed successfully${NC}"
         successful_tests=$((successful_tests + 1))
-        
+
         # Extract and display metrics
         extract_metrics "${report_file}" "${api_name}"
-        
+
     else
         echo -e "  ${RED}✗ Analysis failed${NC}"
         failed_tests=$((failed_tests + 1))
         echo -e "  ${RED}→ Check log: ${log_file}${NC}"
-        
+
         # Show last few lines of error
         if [ -f "${log_file}" ]; then
             echo -e "  ${RED}Last error lines:${NC}"
             tail -n 5 "${log_file}" | sed 's/^/    /'
         fi
     fi
-    
+
     total_tests=$((total_tests + 1))
     echo ""
 }
@@ -197,19 +200,19 @@ EOF
 for api_name in "${!TEST_APIS[@]}"; do
     api_path="${TEST_APIS[$api_name]}"
     output_dir="${TEST_RUN_DIR}/${api_name}"
-    
+
     cat >> "${summary_file}" <<EOF
 ### ${api_name}
 
 **Spec:** \`${api_path}\`
 
 EOF
-    
+
     if [ -f "${output_dir}/report.md" ]; then
         endpoints=${api_metrics["${api_name}_endpoints"]:-0}
         generated=${api_metrics["${api_name}_generated"]:-0}
         health=${api_metrics["${api_name}_health"]:-0}
-        
+
         cat >> "${summary_file}" <<EOF
 - **Status:** ✅ Success
 - **Endpoints Analyzed:** ${endpoints}
@@ -223,7 +226,7 @@ EOF
 EOF
         # Extract first 5 endpoint names from the report
         grep "^#### [0-9]" "${output_dir}/report.md" | head -5 | sed 's/^#### [0-9]*\. /- /' >> "${summary_file}" || true
-        
+
     else
         cat >> "${summary_file}" <<EOF
 - **Status:** ❌ Failed
@@ -236,10 +239,12 @@ EOF
         tail -n 10 "${output_dir}/execution.log" >> "${summary_file}" 2>/dev/null || echo "No error log available" >> "${summary_file}"
         echo '```' >> "${summary_file}"
     fi
-    
-    echo "" >> "${summary_file}"
-    echo "---" >> "${summary_file}"
-    echo "" >> "${summary_file}"
+
+    {
+        echo ""
+        echo "---"
+        echo ""
+    } >> "${summary_file}"
 done
 
 # Add methodology section
@@ -293,7 +298,7 @@ cat >> "${summary_file}" <<'EOF'
 ### Strengths
 
 ✅ Successfully parses OpenAPI 3.0 specifications
-✅ Generates structured test code for each endpoint  
+✅ Generates structured test code for each endpoint
 ✅ Provides comprehensive reporting with health scores
 ✅ Supports multiple test frameworks (testify, ginkgo)
 
