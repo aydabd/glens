@@ -8,7 +8,7 @@ import (
 	"glens/pkg/logging"
 )
 
-func TestSetup_defaults(t *testing.T) {
+func TestSetup_defaults(_ *testing.T) {
 	var buf bytes.Buffer
 	logging.Setup(logging.Config{
 		Level:  logging.LevelInfo,
@@ -18,7 +18,7 @@ func TestSetup_defaults(t *testing.T) {
 	// No panic is the primary assertion; global logger is reconfigured.
 }
 
-func TestSetup_console(t *testing.T) {
+func TestSetup_console(_ *testing.T) {
 	var buf bytes.Buffer
 	logging.Setup(logging.Config{
 		Level:  logging.LevelDebug,

@@ -13,6 +13,7 @@ import (
 // Level represents a logging level.
 type Level string
 
+// Supported log levels.
 const (
 	LevelDebug Level = "debug"
 	LevelInfo  Level = "info"
@@ -23,6 +24,7 @@ const (
 // Format controls the output format of log messages.
 type Format string
 
+// Supported log formats.
 const (
 	FormatConsole Format = "console"
 	FormatJSON    Format = "json"
