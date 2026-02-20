@@ -166,19 +166,19 @@ func (c *AnthropicClient) buildPrompt(endpoint *parser.Endpoint) string {
 	prompt.WriteString("Generate comprehensive integration tests for the following OpenAPI endpoint using Go and the testify framework:\n\n")
 
 	prompt.WriteString("**Endpoint Details:**\n")
-	prompt.WriteString(fmt.Sprintf("- Method: %s\n", endpoint.Method))
-	prompt.WriteString(fmt.Sprintf("- Path: %s\n", endpoint.Path))
+	fmt.Fprintf(&prompt, "- Method: %s\n", endpoint.Method)
+	fmt.Fprintf(&prompt, "- Path: %s\n", endpoint.Path)
 
 	if endpoint.OperationID != "" {
-		prompt.WriteString(fmt.Sprintf("- Operation ID: %s\n", endpoint.OperationID))
+		fmt.Fprintf(&prompt, "- Operation ID: %s\n", endpoint.OperationID)
 	}
 
 	if endpoint.Summary != "" {
-		prompt.WriteString(fmt.Sprintf("- Summary: %s\n", endpoint.Summary))
+		fmt.Fprintf(&prompt, "- Summary: %s\n", endpoint.Summary)
 	}
 
 	if endpoint.Description != "" {
-		prompt.WriteString(fmt.Sprintf("- Description: %s\n", endpoint.Description))
+		fmt.Fprintf(&prompt, "- Description: %s\n", endpoint.Description)
 	}
 
 	// Parameters
@@ -190,8 +190,8 @@ func (c *AnthropicClient) buildPrompt(endpoint *parser.Endpoint) string {
 			if param.Required {
 				required = "required"
 			}
-			prompt.WriteString(fmt.Sprintf("- %s (%s, %s): %s [Type: %s]\n",
-				param.Name, param.In, required, param.Description, param.Schema.Type))
+			fmt.Fprintf(&prompt, "- %s (%s, %s): %s [Type: %s]\n",
+				param.Name, param.In, required, param.Description, param.Schema.Type)
 		}
 	}
 
@@ -199,12 +199,12 @@ func (c *AnthropicClient) buildPrompt(endpoint *parser.Endpoint) string {
 	if endpoint.RequestBody != nil {
 		prompt.WriteString("\n**Request Body:**\n")
 		if endpoint.RequestBody.Description != "" {
-			prompt.WriteString(fmt.Sprintf("- Description: %s\n", endpoint.RequestBody.Description))
+			fmt.Fprintf(&prompt, "- Description: %s\n", endpoint.RequestBody.Description)
 		}
 		prompt.WriteString("- Content Types:\n")
 		for contentType := range endpoint.RequestBody.Content {
 			mediaType := endpoint.RequestBody.Content[contentType]
-			prompt.WriteString(fmt.Sprintf("  - %s: %s\n", contentType, mediaType.Schema.Type))
+			fmt.Fprintf(&prompt, "  - %s: %s\n", contentType, mediaType.Schema.Type)
 		}
 	}
 
@@ -212,7 +212,7 @@ func (c *AnthropicClient) buildPrompt(endpoint *parser.Endpoint) string {
 	if len(endpoint.Responses) > 0 {
 		prompt.WriteString("\n**Expected Responses:**\n")
 		for code, response := range endpoint.Responses {
-			prompt.WriteString(fmt.Sprintf("- %s: %s\n", code, response.Description))
+			fmt.Fprintf(&prompt, "- %s: %s\n", code, response.Description)
 		}
 	}
 
@@ -283,4 +283,22 @@ func (c *AnthropicClient) makeRequest(ctx context.Context, request AnthropicRequ
 	}
 
 	return &response, nil
+}
+
+// NewAnthropicClientWithModel creates a new Anthropic client with a specific model
+func NewAnthropicClientWithModel(modelName string) (*AnthropicClient, error) {
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		return nil, ErrAPIKeyMissing{Model: "Anthropic"}
+	}
+
+	return &AnthropicClient{
+		apiKey:    apiKey,
+		baseURL:   "https://api.anthropic.com",
+		model:     modelName,
+		maxTokens: 4000,
+		client: &http.Client{
+			Timeout: 60 * time.Second,
+		},
+	}, nil
 }
