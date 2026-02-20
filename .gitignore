@@ -14,8 +14,8 @@
 # Dependency directories (remove the comment below to include it)
 vendor/
 
-# Go workspace file
-go.work
+# Go workspace sum (generated, not committed)
+go.work.sum
 
 # IDE files
 .vscode/
