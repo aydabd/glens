@@ -48,9 +48,10 @@ jobs:
 
       - name: Install linting tools inside micromamba environment
         run: |
+          CONDA_ENV_BIN="$MAMBA_ROOT_PREFIX/envs/glens-dev/bin"
           micromamba run -n glens-dev pip install pre-commit==4.5.1
           micromamba run -n glens-dev npm install -g markdownlint-cli@0.44.0 prettier@3.8.1
-          micromamba run -n glens-dev go install github.com/google/yamlfmt/cmd/yamlfmt@v0.21.0
+          GOBIN="$CONDA_ENV_BIN" micromamba run -n glens-dev go install github.com/google/yamlfmt/cmd/yamlfmt@v0.21.0
         shell: bash
 
       - name: Run pre-commit (same as make lint)
