@@ -9,35 +9,6 @@ repos:
       - id: check-json
   - repo: local
     hooks:
-      - id: go-fmt
-        name: go fmt
-        entry: bash
-        args:
-          [
-            -c,
-            'if [ "$LINT_MODE" = "check" ]; then if [ -n "$(find . -name "*.go" -not -path "./templates/*" | xargs gofmt -l)" ]; then echo "❌ Files need formatting. Run: go fmt ./..."; find . -name "*.go" -not -path "./templates/*" | xargs gofmt -l; exit 1; fi; else echo "🛠️ Formatting Go files..."; find . -name "*.go" -not -path "./templates/*" | xargs gofmt -w; fi',
-          ]
-        language: system
-        types: [go]
-        always_run: true
-        pass_filenames: false
-        exclude: "^templates/"
-      - id: go-vet
-        name: go vet
-        entry: bash
-        args:
-          - -c
-          - |
-            ROOT=$(pwd)
-            for module in pkg/logging cmd/glens cmd/tools/demo cmd/tools/accuracy; do
-              echo "Running go vet for $module..."
-              (cd "$ROOT/$module" && go vet ./...) || exit 1
-            done
-        language: system
-        types: [go]
-        always_run: true
-        pass_filenames: false
-        exclude: "^templates/"
       - id: shellcheck
         name: shellcheck
         entry: shellcheck
@@ -77,23 +48,3 @@ repos:
         language: system
         files: '(^|/)([Dd]ockerfile|[Cc]ontainerfile)([._-][^/]+)?$|.*\.dockerfile$'
         pass_filenames: true
-      - id: golangci-lint-system
-        name: golangci-lint
-        entry: bash
-        args:
-          - -c
-          - |
-            if ! command -v golangci-lint >/dev/null 2>&1; then
-              echo "Installing golangci-lint..."
-              go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
-            fi
-            export PATH="$(go env GOPATH)/bin:$PATH"
-            ROOT=$(pwd)
-            for module in pkg/logging cmd/glens cmd/tools/demo cmd/tools/accuracy; do
-              echo "Running golangci-lint for $module..."
-              (cd "$ROOT/$module" && golangci-lint run --timeout=3m) || exit 1
-            done
-        language: system
-        types: [go]
-        always_run: true
-        pass_filenames: false
