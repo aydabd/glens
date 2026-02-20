@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"glens/pkg/logging"
 )
 
 var cfgFile string
@@ -37,10 +37,12 @@ func init() {
 	rootCmd.PersistentFlags().String("log-format", "console", "log format (console or json)")
 
 	if err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")); err != nil {
-		log.Fatal().Err(err).Msg("Failed to bind debug flag")
+		fmt.Fprintln(os.Stderr, "failed to bind debug flag:", err)
+		os.Exit(1)
 	}
 	if err := viper.BindPFlag("log_format", rootCmd.PersistentFlags().Lookup("log-format")); err != nil {
-		log.Fatal().Err(err).Msg("Failed to bind log-format flag")
+		fmt.Fprintln(os.Stderr, "failed to bind log-format flag:", err)
+		os.Exit(1)
 	}
 }
 
@@ -76,16 +78,15 @@ func setupLogging() {
 	logFormat := viper.GetString("log_format")
 	debug := viper.GetBool("debug")
 
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
-	if logFormat == "console" {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	}
-
+	level := logging.LevelInfo
 	if debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		log.Debug().Msg("Debug logging enabled")
-	} else {
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		level = logging.LevelDebug
 	}
+
+	format := logging.FormatJSON
+	if logFormat == "console" {
+		format = logging.FormatConsole
+	}
+
+	logging.Setup(logging.Config{Level: level, Format: format})
 }

@@ -2,19 +2,25 @@ package main
 
 import (
 	"testing"
+
+	"glens/tools/demo/internal/render"
 )
 
-func TestPrintBanner(t *testing.T) {
-	// Ensure printBanner does not panic
-	printBanner()
+func TestRunDemo_missingFile(t *testing.T) {
+	err := runDemo("/nonexistent/spec.json")
+	if err == nil {
+		t.Error("expected error for missing file, got nil")
+	}
 }
 
-func TestPrintModelComparison(t *testing.T) {
-	// Ensure printModelComparison does not panic
-	printModelComparison()
+func TestRenderBanner(t *testing.T) {
+	render.Banner() // must not panic
 }
 
-func TestPrintSampleTest(t *testing.T) {
-	// Ensure printSampleTest does not panic
-	printSampleTest()
+func TestRenderModelComparison(t *testing.T) {
+	render.ModelComparison() // must not panic
+}
+
+func TestRenderSampleTest(t *testing.T) {
+	render.SampleTest() // must not panic
 }
