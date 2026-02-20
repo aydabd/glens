@@ -1,3 +1,7 @@
+# NOTE: pre-commit always runs hooks from the git repository root.
+# For this module's Go checks to work correctly in CI, the CI workflows
+# run go-fmt, go-vet, and golangci-lint directly (not via pre-commit).
+# This file is kept for reference and for local use with: cd <module> && make lint
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

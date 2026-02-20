@@ -10,10 +10,10 @@ func TestCalculateExecutionSummary_SuccessRate(t *testing.T) {
 	gen := []time.Duration{}
 
 	tests := []struct {
-		name        string
-		passed      int
-		total       int
-		wantRate    float64
+		name     string
+		passed   int
+		total    int
+		wantRate float64
 	}{
 		{"no tests", 0, 0, 0.0},
 		{"all passed", 3, 3, 1.0},
