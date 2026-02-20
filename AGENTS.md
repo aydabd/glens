@@ -1,6 +1,6 @@
-# Claude Instructions for Glens Project
+# OpenAI Codex Agent Instructions for Glens Project
 
 <!-- Single source of truth is .github/instructions/project.instructions.md -->
-<!-- Claude Code imports the canonical file below via the @ directive. -->
+<!-- OpenAI Codex imports the canonical file below via the @ directive. -->
 
 @.github/instructions/project.instructions.md
