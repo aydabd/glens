@@ -109,19 +109,19 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 	body.WriteString("## ❌ Test Failure Report\n\n")
 	body.WriteString("This issue was created because integration tests failed for this endpoint.\n\n")
 	body.WriteString("### 🎯 Endpoint Details\n\n")
-	body.WriteString(fmt.Sprintf("**Method:** `%s`\n", endpoint.Method))
-	body.WriteString(fmt.Sprintf("**Path:** `%s`\n", endpoint.Path))
+	fmt.Fprintf(&body, "**Method:** `%s`\n", endpoint.Method)
+	fmt.Fprintf(&body, "**Path:** `%s`\n", endpoint.Path)
 
 	if endpoint.OperationID != "" {
-		body.WriteString(fmt.Sprintf("**Operation ID:** `%s`\n", endpoint.OperationID))
+		fmt.Fprintf(&body, "**Operation ID:** `%s`\n", endpoint.OperationID)
 	}
 
 	if endpoint.Summary != "" {
-		body.WriteString(fmt.Sprintf("**Summary:** %s\n", endpoint.Summary))
+		fmt.Fprintf(&body, "**Summary:** %s\n", endpoint.Summary)
 	}
 
 	if endpoint.Description != "" {
-		body.WriteString(fmt.Sprintf("\n**Description:**\n%s\n", endpoint.Description))
+		fmt.Fprintf(&body, "\n**Description:**\n%s\n", endpoint.Description)
 	}
 
 	// Parameters section
@@ -136,8 +136,8 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 			if param.Required {
 				required = "Yes"
 			}
-			body.WriteString(fmt.Sprintf("| `%s` | `%s` | `%s` | %s | %s |\n",
-				param.Name, param.Schema.Type, param.In, required, param.Description))
+			fmt.Fprintf(&body, "| `%s` | `%s` | `%s` | %s | %s |\n",
+				param.Name, param.Schema.Type, param.In, required, param.Description)
 		}
 	}
 
@@ -145,11 +145,11 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 	if endpoint.RequestBody != nil {
 		body.WriteString("\n### 📤 Request Body\n\n")
 		if endpoint.RequestBody.Description != "" {
-			body.WriteString(fmt.Sprintf("**Description:** %s\n\n", endpoint.RequestBody.Description))
+			fmt.Fprintf(&body, "**Description:** %s\n\n", endpoint.RequestBody.Description)
 		}
 		body.WriteString("**Content Types:**\n")
 		for contentType := range endpoint.RequestBody.Content {
-			body.WriteString(fmt.Sprintf("- `%s`\n", contentType))
+			fmt.Fprintf(&body, "- `%s`\n", contentType)
 		}
 	}
 
@@ -160,7 +160,7 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 		body.WriteString("|-------------|-------------|\n")
 
 		for code, response := range endpoint.Responses {
-			body.WriteString(fmt.Sprintf("| `%s` | %s |\n", code, response.Description))
+			fmt.Fprintf(&body, "| `%s` | %s |\n", code, response.Description)
 		}
 	}
 
@@ -169,7 +169,7 @@ func (c *Client) generateIssueBody(endpoint *parser.Endpoint, aiModels []string)
 	body.WriteString("The following AI models generated tests that failed:\n\n")
 
 	for _, model := range aiModels {
-		body.WriteString(fmt.Sprintf("- ❌ **%s** - Tests failed (see subtask for details)\n", model))
+		fmt.Fprintf(&body, "- ❌ **%s** - Tests failed (see subtask for details)\n", model)
 	}
 
 	body.WriteString("\n### 🔍 Investigation Checklist\n\n")
@@ -244,14 +244,14 @@ func (c *Client) createSubtask(ctx context.Context, parentIssue int, endpoint *p
 func (c *Client) generateSubtaskBody(parentIssue int, endpoint *parser.Endpoint, aiModel string) string {
 	var body strings.Builder
 
-	body.WriteString(fmt.Sprintf("## 🤖 %s Integration Test Generation\n\n", aiModel))
-	body.WriteString(fmt.Sprintf("**Parent Issue:** #%d\n", parentIssue))
-	body.WriteString(fmt.Sprintf("**Endpoint:** `%s %s`\n", endpoint.Method, endpoint.Path))
-	body.WriteString(fmt.Sprintf("**AI Model:** %s\n\n", aiModel))
+	fmt.Fprintf(&body, "## 🤖 %s Integration Test Generation\n\n", aiModel)
+	fmt.Fprintf(&body, "**Parent Issue:** #%d\n", parentIssue)
+	fmt.Fprintf(&body, "**Endpoint:** `%s %s`\n", endpoint.Method, endpoint.Path)
+	fmt.Fprintf(&body, "**AI Model:** %s\n\n", aiModel)
 
 	body.WriteString("### 🎯 Objective\n\n")
-	body.WriteString(fmt.Sprintf("Generate comprehensive integration tests for the `%s %s` endpoint using the %s AI model.\n\n",
-		endpoint.Method, endpoint.Path, aiModel))
+	fmt.Fprintf(&body, "Generate comprehensive integration tests for the `%s %s` endpoint using the %s AI model.\n\n",
+		endpoint.Method, endpoint.Path, aiModel)
 
 	body.WriteString("### 📋 Tasks\n\n")
 	body.WriteString("- [ ] **Analyze Endpoint Specification**\n")
@@ -287,8 +287,8 @@ func (c *Client) generateSubtaskBody(parentIssue int, endpoint *parser.Endpoint,
 			if param.Required {
 				required = "required"
 			}
-			body.WriteString(fmt.Sprintf("- `%s` (%s, %s): %s\n",
-				param.Name, param.In, required, param.Description))
+			fmt.Fprintf(&body, "- `%s` (%s, %s): %s\n",
+				param.Name, param.In, required, param.Description)
 		}
 		body.WriteString("\n")
 	}
@@ -304,7 +304,7 @@ func (c *Client) generateSubtaskBody(parentIssue int, endpoint *parser.Endpoint,
 	if len(endpoint.Responses) > 0 {
 		body.WriteString("**Response Validation:**\n")
 		for code := range endpoint.Responses {
-			body.WriteString(fmt.Sprintf("- HTTP %s response handling\n", code))
+			fmt.Fprintf(&body, "- HTTP %s response handling\n", code)
 		}
 		body.WriteString("\n")
 	}
@@ -331,7 +331,7 @@ func (c *Client) generateSubtaskBody(parentIssue int, endpoint *parser.Endpoint,
 	body.WriteString("5. **AI Prompt Details** - Prompt used for generation\n\n")
 
 	body.WriteString("---\n")
-	body.WriteString(fmt.Sprintf("*Generated by Glens for %s*", aiModel))
+	fmt.Fprintf(&body, "*Generated by Glens for %s*", aiModel)
 
 	return body.String()
 }
