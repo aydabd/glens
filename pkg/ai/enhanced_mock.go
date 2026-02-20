@@ -183,8 +183,6 @@ func (c *EnhancedMockClient) generateEnhancedTestCode(endpoint *parser.Endpoint,
 	// Add header
 	testCases.WriteString("package main\n\n")
 	testCases.WriteString("import (\n")
-	testCases.WriteString("\t\"context\"\n")
-	testCases.WriteString("\t\"encoding/json\"\n")
 	testCases.WriteString("\t\"net/http\"\n")
 	testCases.WriteString("\t\"testing\"\n")
 	testCases.WriteString("\t\"time\"\n\n")

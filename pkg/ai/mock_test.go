@@ -227,7 +227,15 @@ func TestManager_ModelNotFound(t *testing.T) {
 
 // TestCreateClient_RequiresAPIKey verifies that cloud models return an error
 // when the required environment variable is not set.
+// Env vars are process-global, so subtests must not run in parallel.
 func TestCreateClient_RequiresAPIKey(t *testing.T) {
+	// Clear all API keys for the duration of the test so the result is
+	// deterministic regardless of the developer's local environment.
+	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	t.Setenv("GOOGLE_API_KEY", "")
+	t.Setenv("MISTRAL_API_KEY", "")
+
 	cloudModels := []string{
 		// OpenAI
 		"gpt-4o", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
@@ -246,7 +254,6 @@ func TestCreateClient_RequiresAPIKey(t *testing.T) {
 	for _, name := range cloudModels {
 		name := name
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			_, err := createClient(name)
 			// Without an API key set the client must return an error.
 			assert.Error(t, err, "model %q should require an API key", name)
