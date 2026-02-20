@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"glens/pkg/logging"
+	"glens/tools/glens/pkg/logging"
 )
 
 var cfgFile string

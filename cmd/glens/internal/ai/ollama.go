@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // OllamaClient implements Client interface for Ollama local LLM

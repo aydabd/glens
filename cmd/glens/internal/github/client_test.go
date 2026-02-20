@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // TestGitHubIntegration tests the complete GitHub issue lifecycle

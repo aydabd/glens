@@ -10,7 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // GenerateReport creates a comprehensive report from specification and results

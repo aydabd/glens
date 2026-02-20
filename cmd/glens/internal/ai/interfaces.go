@@ -3,7 +3,7 @@ package ai
 import (
 	"context"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // Client defines the interface for AI model clients

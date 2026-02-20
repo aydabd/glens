@@ -3,7 +3,7 @@ package generator
 import (
 	"time"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // TestGenerator handles test code generation and execution

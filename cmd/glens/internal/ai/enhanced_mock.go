@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // EnhancedMockClient is an improved mock AI client with modern features

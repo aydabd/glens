@@ -1,4 +1,4 @@
-module glens
+module glens/tools/glens
 
 go 1.25
 

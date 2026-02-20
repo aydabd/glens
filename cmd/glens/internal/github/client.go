@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // Client wraps GitHub API operations

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"glens/internal/parser"
+	"glens/tools/glens/internal/parser"
 )
 
 // MockClient is a mock AI client for testing purposes
