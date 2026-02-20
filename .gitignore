@@ -17,6 +17,9 @@ vendor/
 # Go workspace sum (generated, not committed)
 go.work.sum
 
+# Root-level compiled binary
+/glens
+
 # IDE files
 .vscode/
 .idea/
