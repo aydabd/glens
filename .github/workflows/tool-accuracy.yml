@@ -40,6 +40,36 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cmd/tools/accuracy
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: cmd/tools/accuracy/go.mod
+
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
+
+      - name: Install pre-commit
+        run: pip install pre-commit==4.5.1
+
+      - name: Run pre-commit
+        env:
+          LINT_MODE: check
+        run: |
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          pre-commit run --config .pre-commit-config.yaml --all-files
+
   test:
     name: Test
     runs-on: ubuntu-latest
