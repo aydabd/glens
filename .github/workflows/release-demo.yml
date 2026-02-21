@@ -11,6 +11,12 @@ on:
     paths:
       - "cmd/tools/demo/**"
 
+# Ensure only one release runs at a time for this module.
+# Subsequent pushes are queued rather than cancelled.
+concurrency:
+  group: release-${{ github.workflow }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 

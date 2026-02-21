@@ -5,17 +5,23 @@ description: >
   changelog, and pushes it. Designed to be called from a per-module release
   workflow inside the same repository or from an external repository via
   aydabd/glens/.github/actions/bump-and-tag@main.
+  NOTE: The version-bump logic in this action is intentionally kept in sync with
+  the inline logic in .github/workflows/release-module.yml. When updating one,
+  update both.
 
 inputs:
   tag-prefix:
     description: >
       Tag prefix that identifies this module's releases.
       Examples: "pkg/logging/v", "cmd/glens/v", "cmd/tools/demo/v".
+      Must not contain glob special characters.
     required: true
   module-path:
     description: >
       Relative path to the module root used to scope commit filtering.
       Examples: "pkg/logging", "cmd/glens", "cmd/tools/demo".
+      Note: module path renames reset version history (git log does not follow
+      directory renames).
     required: true
   github-token:
     description: GitHub token with contents:write permission to push tags.
@@ -23,7 +29,7 @@ inputs:
   default-bump:
     description: >
       Fallback bump type when no conventional commit keywords are found.
-      One of: patch | minor | major.
+      Must be one of: patch | minor | major.
     required: false
     default: patch
 
@@ -40,6 +46,11 @@ outputs:
   changelog:
     description: Markdown bullet list of commits since the previous tag.
     value: ${{ steps.compute.outputs.changelog }}
+  skipped:
+    description: >
+      Set to "true" when no commits affecting this module were found since the
+      last tag. Tag creation is skipped in that case.
+    value: ${{ steps.compute.outputs.skipped }}
 
 runs:
   using: composite
@@ -54,31 +65,52 @@ runs:
       run: |
         set -euo pipefail
 
+        # ── Validate default-bump ────────────────────────────────────────────
+        if [ "$DEFAULT_BUMP" != "patch" ] && \
+           [ "$DEFAULT_BUMP" != "minor" ] && \
+           [ "$DEFAULT_BUMP" != "major" ]; then
+          echo "error: invalid default-bump '${DEFAULT_BUMP}'. Must be patch, minor, or major." >&2
+          exit 1
+        fi
+
         # ── Find last tag for this module ────────────────────────────────────
         LAST_TAG=$(git tag -l "${TAG_PREFIX}*" --sort=-version:refname | head -1 || true)
         echo "previous_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
 
-        # ── Collect commits since last tag scoped to module path ─────────────
+        # ── Collect full commit bodies since last tag scoped to module path ──
+        # Using %B (full body) so BREAKING CHANGE: in the commit body is detected.
         if [ -z "$LAST_TAG" ]; then
-          COMMITS=$(git log --pretty=format:"%s" -- "${MODULE_PATH}" || true)
+          COMMITS=$(git log --pretty=format:"%B" -- "${MODULE_PATH}" || true)
         else
-          COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s" -- "${MODULE_PATH}" || true)
+          COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%B" -- "${MODULE_PATH}" || true)
         fi
 
+        # ── Skip release when there are no changes for this module ───────────
+        if [ -z "$COMMITS" ]; then
+          echo "No commits affecting '${MODULE_PATH}' since last tag '${LAST_TAG}'. Skipping release."
+          echo "skipped=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "skipped=false" >> "$GITHUB_OUTPUT"
+
         # ── Determine bump type from conventional commits ────────────────────
-        # BREAKING CHANGE or feat!: → major; feat: → minor; else → default-bump
+        # feat!: / feature!: in subject line → major
+        # BREAKING CHANGE: in commit body/footer → major
+        # feat: / feature: → minor
+        # else → default-bump
         BUMP="$DEFAULT_BUMP"
-        if echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?!:|BREAKING[- ]CHANGE"; then
+        if echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?!:|^BREAKING[ -]CHANGE:"; then
           BUMP="major"
         elif echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?:"; then
           BUMP="minor"
         fi
 
-        # ── Parse last version ───────────────────────────────────────────────
+        # ── Parse last version (strip any pre-release suffix, e.g. -beta1) ───
         if [ -z "$LAST_TAG" ]; then
           LAST_VER="0.0.0"
         else
           LAST_VER="${LAST_TAG#"${TAG_PREFIX}"}"
+          LAST_VER=$(echo "$LAST_VER" | sed 's/[-+].*//')
         fi
 
         MAJOR=$(echo "$LAST_VER" | cut -d. -f1)
@@ -90,6 +122,7 @@ runs:
           major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
           minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
           patch) PATCH=$((PATCH + 1)) ;;
+          *)     echo "error: unexpected bump type '${BUMP}'." >&2; exit 1 ;;
         esac
 
         NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
@@ -99,7 +132,7 @@ runs:
         echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
         echo "bump=${BUMP}" >> "$GITHUB_OUTPUT"
 
-        # ── Build changelog ──────────────────────────────────────────────────
+        # ── Build changelog (subject + short hash) ───────────────────────────
         if [ -z "$LAST_TAG" ]; then
           CHANGELOG=$(git log --pretty=format:"- %s (%h)" -- "${MODULE_PATH}" || true)
         else
@@ -118,6 +151,7 @@ runs:
         } >> "$GITHUB_OUTPUT"
 
     - name: Create and push annotated tag
+      if: steps.compute.outputs.skipped != 'true'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
@@ -130,9 +164,17 @@ runs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
-        # Authenticate push via token in remote URL
-        git remote set-url origin \
-          "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+        # Use a credential helper so the token is never embedded in the remote URL
+        # (avoids token exposure in git command output and error logs).
+        git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+        git config credential.helper \
+          '!f() { echo "username=x-access-token"; echo "password=${GITHUB_TOKEN}"; }; f'
+
+        # Skip if tag already exists (e.g. workflow re-run or concurrent run).
+        if git tag -l "${NEW_TAG}" | grep -qx "${NEW_TAG}"; then
+          echo "Tag '${NEW_TAG}' already exists; skipping tag creation."
+          exit 0
+        fi
 
         printf 'Release %s\n\n%s\n' "${NEW_TAG}" "${CHANGELOG}" \
           | git tag -a "${NEW_TAG}" -F -
