@@ -13,14 +13,14 @@ func TestRunDemo_missingFile(t *testing.T) {
 	}
 }
 
-func TestRenderBanner(t *testing.T) {
+func TestRenderBanner(_ *testing.T) {
 	render.Banner() // must not panic
 }
 
-func TestRenderModelComparison(t *testing.T) {
+func TestRenderModelComparison(_ *testing.T) {
 	render.ModelComparison() // must not panic
 }
 
-func TestRenderSampleTest(t *testing.T) {
+func TestRenderSampleTest(_ *testing.T) {
 	render.SampleTest() // must not panic
 }
