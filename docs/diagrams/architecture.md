@@ -1,34 +1,5 @@
 # Glens Architecture
 
-## Problem It Solves
-
-```mermaid
-graph TB
-    subgraph "Without Glens"
-        P1[OpenAPI Spec Created] --> P2[Manual Test Writing]
-        P2 --> P3[Time Consuming]
-        P2 --> P4[Inconsistent Coverage]
-        P2 --> P5[Human Error]
-        P3 --> P6[Delayed QA]
-        P4 --> P6
-        P5 --> P6
-    end
-
-    subgraph "With Glens"
-        S1[OpenAPI Spec] --> S2[AI Test Generation]
-        S2 --> S3[Automated Execution]
-        S3 --> S4{Tests Pass?}
-        S4 -->|Yes| S5[Report Only]
-        S4 -->|No| S6[GitHub Issue Created]
-        S6 --> S7[Detailed Failure Info]
-        S5 --> S8[Fast Feedback]
-        S7 --> S8
-    end
-
-    style P6 fill:#ff6b6b
-    style S8 fill:#51cf66
-```
-
 ## High-Level Flow
 
 ```mermaid
@@ -49,118 +20,69 @@ flowchart LR
     style I fill:#51cf66
 ```
 
-## Detailed Component Architecture
+## Workspace Module Layout
 
 ```mermaid
 graph TB
-    subgraph "Input Layer"
+    subgraph "Go Workspace (go.work)"
+        direction TB
+        PKG["pkg/logging<br/>module glens/pkg/logging<br/>generic zerolog wrapper"]
+        GLENS["cmd/glens<br/>module glens/tools/glens<br/>main CLI"]
+        DEMO["cmd/tools/demo<br/>module glens/tools/demo<br/>spec visualiser"]
+        ACC["cmd/tools/accuracy<br/>module glens/tools/accuracy<br/>accuracy reporter"]
+    end
+
+    GLENS -->|imports| PKG
+
+    style PKG fill:#51cf66
+    style GLENS fill:#4dabf7
+    style DEMO fill:#fab005
+    style ACC fill:#fab005
+```
+
+## glens CLI Component Architecture
+
+```mermaid
+graph TB
+    subgraph "Input"
         URL[OpenAPI Spec URL/File]
-        CFG[Config File]
-        ENV[Environment Variables]
+        CFG[Config File / Env Vars]
     end
 
-    subgraph "Parser Layer"
-        PARSE[OpenAPI Parser]
-        VAL[Spec Validator]
+    subgraph "cmd/glens/internal"
+        PARSE[parser — OpenAPI Parser]
+        MGR[ai — AI Manager]
+        GEN[generator — Test Generator + Executor]
+        GH[github — GitHub Client]
+        REP[reporter — Report Generator]
     end
 
-    subgraph "AI Layer"
-        MGR[AI Manager]
+    subgraph "AI Providers"
         GPT[OpenAI GPT-4]
         CLAUDE[Anthropic Claude]
         GEMINI[Google Gemini]
         OLLAMA[Ollama Local LLM]
     end
 
-    subgraph "Generator Layer"
-        GEN[Test Generator]
-        EXEC[Test Executor]
-        ANAL[Result Analyzer]
-    end
-
-    subgraph "Integration Layer"
-        GH[GitHub Client]
-        ISSUE[Issue Creator]
-    end
-
-    subgraph "Output Layer"
+    subgraph "Output"
         MD[Markdown Report]
         HTML[HTML Report]
-        JSON[JSON Report]
+        ISSUE[GitHub Issue]
     end
 
     URL --> PARSE
     CFG --> MGR
-    ENV --> MGR
-    PARSE --> VAL
-    VAL --> MGR
-
-    MGR --> GPT
-    MGR --> CLAUDE
-    MGR --> GEMINI
-    MGR --> OLLAMA
-
-    GPT --> GEN
-    CLAUDE --> GEN
-    GEMINI --> GEN
-    OLLAMA --> GEN
-
-    GEN --> EXEC
-    EXEC --> ANAL
-
-    ANAL --> |Failures| ISSUE
-    ISSUE --> GH
-
-    ANAL --> MD
-    ANAL --> HTML
-    ANAL --> JSON
+    PARSE --> MGR
+    MGR --> GPT & CLAUDE & GEMINI & OLLAMA
+    GPT & CLAUDE & GEMINI & OLLAMA --> GEN
+    GEN --> |Failures| GH --> ISSUE
+    GEN --> REP --> MD & HTML
 
     style PARSE fill:#4dabf7
     style MGR fill:#fab005
     style GEN fill:#fab005
-    style ANAL fill:#ff6b6b
-    style ISSUE fill:#ff6b6b
+    style GH fill:#ff6b6b
     style MD fill:#51cf66
-```
-
-## Test Generation Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant CLI
-    participant Parser
-    participant AI
-    participant Generator
-    participant Executor
-    participant GitHub
-    participant Reporter
-
-    User->>CLI: analyze command
-    CLI->>Parser: Load OpenAPI spec
-    Parser->>Parser: Validate spec
-    Parser->>CLI: Return endpoints
-
-    loop For each endpoint
-        CLI->>AI: Request test generation
-        AI->>AI: Analyze endpoint schema
-        AI-->>CLI: Return test code
-
-        CLI->>Generator: Save test file
-        Generator->>Executor: Run go test
-        Executor-->>Generator: Test results
-
-        alt Test Failure
-            Generator->>GitHub: Create issue
-            GitHub-->>Generator: Issue created
-        else Test Pass
-            Generator->>Generator: Log success
-        end
-
-        Generator->>Reporter: Add results
-    end
-
-    Reporter->>User: Generate report
 ```
 
 ## Issue Creation Decision Logic
@@ -172,12 +94,12 @@ flowchart TD
     B -->|Yes| D{Tests Run?}
     D -->|No| E[Setup Issue]
     D -->|Yes| F{Any Failures?}
-    F -->|No| G[All Pass - No Issue]
+    F -->|No| G[All Pass — No Issue]
     F -->|Yes| H{Real Test Failure?}
-    H -->|No| I[Connection/Setup Error]
+    H -->|No| I[Connection / Setup Error]
     H -->|Yes| J[Create GitHub Issue]
 
-    C --> K[Log Error - No Issue]
+    C --> K[Log Error — No Issue]
     E --> K
     I --> K
     G --> L[Report Success]
@@ -193,119 +115,22 @@ flowchart TD
     style M fill:#ff8787
 ```
 
-## AI Model Comparison Flow
+## CI Workflow Structure
 
 ```mermaid
 graph LR
-    subgraph "Input"
-        EP[Endpoint Schema]
+    subgraph "Parallel — no dependencies"
+        PL["pkg-logging.yml<br/>triggers: pkg/logging/**"]
+        GL["glens.yml<br/>triggers: cmd/glens/**"]
+        TD["tool-demo.yml<br/>triggers: cmd/tools/demo/**"]
+        TA["tool-accuracy.yml<br/>triggers: cmd/tools/accuracy/**"]
     end
 
-    subgraph "AI Models"
-        GPT[GPT-4<br/>Cloud]
-        CLAUDE[Claude<br/>Cloud]
-        OLLAMA[Ollama<br/>Local]
-    end
+    REL["release.yml<br/>triggers: v* tags<br/>builds all binaries<br/>linux/amd64 · linux/arm64<br/>darwin/amd64 · darwin/arm64<br/>windows/amd64"]
 
-    subgraph "Generated Tests"
-        T1[Test 1]
-        T2[Test 2]
-        T3[Test 3]
-    end
-
-    subgraph "Execution"
-        E1[Run Test 1]
-        E2[Run Test 2]
-        E3[Run Test 3]
-    end
-
-    subgraph "Analysis"
-        CMP[Compare Results]
-        BEST[Identify Best Model]
-    end
-
-    EP --> GPT
-    EP --> CLAUDE
-    EP --> OLLAMA
-
-    GPT --> T1
-    CLAUDE --> T2
-    OLLAMA --> T3
-
-    T1 --> E1
-    T2 --> E2
-    T3 --> E3
-
-    E1 --> CMP
-    E2 --> CMP
-    E3 --> CMP
-
-    CMP --> BEST
-
-    style GPT fill:#fab005
-    style CLAUDE fill:#fab005
-    style OLLAMA fill:#fab005
-    style BEST fill:#51cf66
-```
-
-## File Structure
-
-```mermaid
-graph TB
-    subgraph "Project Root"
-        ROOT[glens/]
-    end
-
-    subgraph "Commands"
-        CMD[cmd/]
-        ROOT_GO[root.go - Config & CLI]
-        ANALYZE[analyze.go - Main Logic]
-        MODELS[models.go - AI Management]
-    end
-
-    subgraph "Packages"
-        PKG[pkg/]
-        AI[ai/ - AI Clients]
-        GEN[generator/ - Test Gen]
-        GH[github/ - GitHub API]
-        PARSE[parser/ - OpenAPI]
-        REP[reporter/ - Reports]
-    end
-
-    subgraph "Config"
-        CONF[configs/]
-        EXAMPLE[config.example.yaml]
-        USER[config.yaml]
-    end
-
-    subgraph "Templates"
-        TMPL[templates/]
-        ISSUE_T[issue-templates/]
-        TEST_T[test-templates/]
-    end
-
-    ROOT --> CMD
-    ROOT --> PKG
-    ROOT --> CONF
-    ROOT --> TMPL
-
-    CMD --> ROOT_GO
-    CMD --> ANALYZE
-    CMD --> MODELS
-
-    PKG --> AI
-    PKG --> GEN
-    PKG --> GH
-    PKG --> PARSE
-    PKG --> REP
-
-    CONF --> EXAMPLE
-    CONF --> USER
-
-    TMPL --> ISSUE_T
-    TMPL --> TEST_T
-
-    style ROOT fill:#4dabf7
-    style CMD fill:#fab005
-    style PKG fill:#51cf66
+    style REL fill:#4dabf7
+    style PL fill:#51cf66
+    style GL fill:#51cf66
+    style TD fill:#fab005
+    style TA fill:#fab005
 ```
