@@ -1,0 +1,31 @@
+name: Release — accuracy
+
+# Triggered automatically when cmd/tools/accuracy code is merged into main.
+# Creates an annotated semver tag (e.g. cmd/tools/accuracy/v0.2.0),
+# cross-compiles binaries for all supported platforms, and publishes a GitHub
+# Release.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "cmd/tools/accuracy/**"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: ./.github/workflows/release-module.yml
+    with:
+      module-path: cmd/tools/accuracy
+      module-name: accuracy
+      tag-prefix: cmd/tools/accuracy/v
+      working-directory: cmd/tools/accuracy
+      go-version: "1.25"
+      build-binary: true
+      binary-name: glens-accuracy
+      environment: production
+      default-bump: patch
+    secrets: inherit

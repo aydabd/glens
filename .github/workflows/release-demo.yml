@@ -1,0 +1,30 @@
+name: Release — demo
+
+# Triggered automatically when cmd/tools/demo code is merged into main.
+# Creates an annotated semver tag (e.g. cmd/tools/demo/v0.2.0), cross-compiles
+# binaries for all supported platforms, and publishes a GitHub Release.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "cmd/tools/demo/**"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: ./.github/workflows/release-module.yml
+    with:
+      module-path: cmd/tools/demo
+      module-name: demo
+      tag-prefix: cmd/tools/demo/v
+      working-directory: cmd/tools/demo
+      go-version: "1.25"
+      build-binary: true
+      binary-name: glens-demo
+      environment: production
+      default-bump: patch
+    secrets: inherit
