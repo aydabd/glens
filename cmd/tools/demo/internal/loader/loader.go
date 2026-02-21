@@ -48,7 +48,7 @@ func fetch(source string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("HTTP request failed: %w", err)
 		}
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint:errcheck
 
 		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 			bodySnippet, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
