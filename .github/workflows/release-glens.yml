@@ -1,0 +1,36 @@
+name: Release — glens
+
+# Triggered automatically when cmd/glens code is merged into main.
+# Creates an annotated semver tag (e.g. cmd/glens/v1.2.3), cross-compiles
+# binaries for all supported platforms, and publishes a GitHub Release.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "cmd/glens/**"
+
+# Ensure only one release runs at a time for this module.
+# Subsequent pushes are queued rather than cancelled.
+concurrency:
+  group: release-${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: ./.github/workflows/release-module.yml
+    with:
+      module-path: cmd/glens
+      module-name: glens
+      tag-prefix: cmd/glens/v
+      working-directory: cmd/glens
+      go-version: "1.25"
+      build-binary: true
+      binary-name: glens
+      environment: production
+      default-bump: patch
+    secrets: inherit

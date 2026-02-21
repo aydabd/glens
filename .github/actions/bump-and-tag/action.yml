@@ -1,0 +1,181 @@
+name: Bump Version and Create Annotated Tag
+description: >
+  Scans conventional commits for a module since its last semver tag, calculates
+  the next version (major / minor / patch), creates an annotated git tag with a
+  changelog, and pushes it. Designed to be called from a per-module release
+  workflow inside the same repository or from an external repository via
+  aydabd/glens/.github/actions/bump-and-tag@main.
+  NOTE: The version-bump logic in this action is intentionally kept in sync with
+  the inline logic in .github/workflows/release-module.yml. When updating one,
+  update both.
+
+inputs:
+  tag-prefix:
+    description: >
+      Tag prefix that identifies this module's releases.
+      Examples: "pkg/logging/v", "cmd/glens/v", "cmd/tools/demo/v".
+      Must not contain glob special characters.
+    required: true
+  module-path:
+    description: >
+      Relative path to the module root used to scope commit filtering.
+      Examples: "pkg/logging", "cmd/glens", "cmd/tools/demo".
+      Note: module path renames reset version history (git log does not follow
+      directory renames).
+    required: true
+  github-token:
+    description: GitHub token with contents:write permission to push tags.
+    required: true
+  default-bump:
+    description: >
+      Fallback bump type when no conventional commit keywords are found.
+      Must be one of: patch | minor | major.
+    required: false
+    default: patch
+
+outputs:
+  tag:
+    description: Full annotated tag that was created (e.g. "pkg/logging/v0.2.0").
+    value: ${{ steps.compute.outputs.tag }}
+  version:
+    description: Semver string without prefix (e.g. "0.2.0").
+    value: ${{ steps.compute.outputs.version }}
+  previous-tag:
+    description: The previous tag for this module (empty string on first release).
+    value: ${{ steps.compute.outputs.previous_tag }}
+  changelog:
+    description: Markdown bullet list of commits since the previous tag.
+    value: ${{ steps.compute.outputs.changelog }}
+  skipped:
+    description: >
+      Set to "true" when no commits affecting this module were found since the
+      last tag. Tag creation is skipped in that case.
+    value: ${{ steps.compute.outputs.skipped }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute next version and changelog
+      id: compute
+      shell: bash
+      env:
+        TAG_PREFIX: ${{ inputs.tag-prefix }}
+        MODULE_PATH: ${{ inputs.module-path }}
+        DEFAULT_BUMP: ${{ inputs.default-bump }}
+      run: |
+        set -euo pipefail
+
+        # ── Validate default-bump ────────────────────────────────────────────
+        if [ "$DEFAULT_BUMP" != "patch" ] && \
+           [ "$DEFAULT_BUMP" != "minor" ] && \
+           [ "$DEFAULT_BUMP" != "major" ]; then
+          echo "error: invalid default-bump '${DEFAULT_BUMP}'. Must be patch, minor, or major." >&2
+          exit 1
+        fi
+
+        # ── Find last tag for this module ────────────────────────────────────
+        LAST_TAG=$(git tag -l "${TAG_PREFIX}*" --sort=-version:refname | head -1 || true)
+        echo "previous_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+
+        # ── Collect full commit bodies since last tag scoped to module path ──
+        # Using %B (full body) so BREAKING CHANGE: in the commit body is detected.
+        if [ -z "$LAST_TAG" ]; then
+          COMMITS=$(git log --pretty=format:"%B" -- "${MODULE_PATH}" || true)
+        else
+          COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%B" -- "${MODULE_PATH}" || true)
+        fi
+
+        # ── Skip release when there are no changes for this module ───────────
+        if [ -z "$COMMITS" ]; then
+          echo "No commits affecting '${MODULE_PATH}' since last tag '${LAST_TAG}'. Skipping release."
+          echo "skipped=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "skipped=false" >> "$GITHUB_OUTPUT"
+
+        # ── Determine bump type from conventional commits ────────────────────
+        # feat!: / feature!: in subject line → major
+        # BREAKING CHANGE: in commit body/footer → major
+        # feat: / feature: → minor
+        # else → default-bump
+        BUMP="$DEFAULT_BUMP"
+        if echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?!:|^BREAKING[ -]CHANGE:"; then
+          BUMP="major"
+        elif echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?:"; then
+          BUMP="minor"
+        fi
+
+        # ── Parse last version (strip any pre-release suffix, e.g. -beta1) ───
+        if [ -z "$LAST_TAG" ]; then
+          LAST_VER="0.0.0"
+        else
+          LAST_VER="${LAST_TAG#"${TAG_PREFIX}"}"
+          LAST_VER=$(echo "$LAST_VER" | sed 's/[-+].*//')
+        fi
+
+        MAJOR=$(echo "$LAST_VER" | cut -d. -f1)
+        MINOR=$(echo "$LAST_VER" | cut -d. -f2)
+        PATCH=$(echo "$LAST_VER" | cut -d. -f3)
+
+        # ── Apply bump ───────────────────────────────────────────────────────
+        case "$BUMP" in
+          major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+          minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+          patch) PATCH=$((PATCH + 1)) ;;
+          *)     echo "error: unexpected bump type '${BUMP}'." >&2; exit 1 ;;
+        esac
+
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+        NEW_TAG="${TAG_PREFIX}${NEW_VERSION}"
+
+        echo "tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+        echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+        echo "bump=${BUMP}" >> "$GITHUB_OUTPUT"
+
+        # ── Build changelog (subject + short hash) ───────────────────────────
+        if [ -z "$LAST_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" -- "${MODULE_PATH}" || true)
+        else
+          CHANGELOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" -- "${MODULE_PATH}" || true)
+        fi
+
+        if [ -z "$CHANGELOG" ]; then
+          CHANGELOG="- No changes since previous release"
+        fi
+
+        # Multiline output via heredoc delimiter
+        {
+          echo "changelog<<GH_DELIM"
+          echo "$CHANGELOG"
+          echo "GH_DELIM"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Create and push annotated tag
+      if: steps.compute.outputs.skipped != 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        NEW_TAG: ${{ steps.compute.outputs.tag }}
+        CHANGELOG: ${{ steps.compute.outputs.changelog }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        # Use a credential helper so the token is never embedded in the remote URL
+        # (avoids token exposure in git command output and error logs).
+        git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+        git config credential.helper \
+          '!f() { echo "username=x-access-token"; echo "password=${GITHUB_TOKEN}"; }; f'
+
+        # Skip if tag already exists (e.g. workflow re-run or concurrent run).
+        if git tag -l "${NEW_TAG}" | grep -qx "${NEW_TAG}"; then
+          echo "Tag '${NEW_TAG}' already exists; skipping tag creation."
+          exit 0
+        fi
+
+        printf 'Release %s\n\n%s\n' "${NEW_TAG}" "${CHANGELOG}" \
+          | git tag -a "${NEW_TAG}" -F -
+        git push origin "${NEW_TAG}"

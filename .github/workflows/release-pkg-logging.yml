@@ -1,0 +1,35 @@
+name: Release — pkg/logging
+
+# Triggered automatically when pkg/logging code is merged into main.
+# Creates an annotated semver tag (e.g. pkg/logging/v0.2.0) and publishes a
+# GitHub Release. No binary assets are attached because this is a library.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "pkg/logging/**"
+
+# Ensure only one release runs at a time for this module.
+# Subsequent pushes are queued rather than cancelled.
+concurrency:
+  group: release-${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: ./.github/workflows/release-module.yml
+    with:
+      module-path: pkg/logging
+      module-name: logging
+      tag-prefix: pkg/logging/v
+      working-directory: pkg/logging
+      go-version: "1.25"
+      build-binary: false
+      environment: production
+      default-bump: patch
+    secrets: inherit

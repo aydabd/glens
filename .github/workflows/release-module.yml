@@ -1,0 +1,366 @@
+name: Release Module (Reusable)
+# ─────────────────────────────────────────────────────────────────────────────
+# Reusable workflow for releasing any isolated Go module in this workspace.
+#
+# Usage from the same repository:
+#   uses: ./.github/workflows/release-module.yml
+#
+# Usage from an external repository:
+#   uses: aydabd/glens/.github/workflows/release-module.yml@main
+#
+# The workflow:
+#   1. Detects the last semver tag for the module and bumps the version using
+#      conventional commit keywords (feat → minor, BREAKING CHANGE → major).
+#   2. Creates an annotated git tag with a changelog body.
+#   3. Optionally cross-compiles Go binaries (linux/darwin/windows × amd64/arm64).
+#   4. Publishes a GitHub Release with the changelog and optional binary assets.
+#
+# NOTE: The version-bump shell logic below is intentionally kept in sync with
+# .github/actions/bump-and-tag/action.yml so the standalone action can also be
+# called from external repositories without a relative-path dependency on this
+# workflow. When changing the bump logic, update both files.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      module-path:
+        description: >
+          Relative path to the module root, used to scope commit filtering.
+          Examples: "pkg/logging", "cmd/glens", "cmd/tools/demo".
+          Note: module path renames reset version history (git log does not
+          follow directory renames).
+        required: true
+        type: string
+      module-name:
+        description: >
+          Human-readable module name used in release titles.
+          Examples: "logging", "glens", "demo".
+        required: true
+        type: string
+      tag-prefix:
+        description: >
+          Tag prefix that identifies this module's releases.
+          Examples: "pkg/logging/v", "cmd/glens/v", "cmd/tools/demo/v".
+          Must not contain glob special characters.
+        required: true
+        type: string
+      working-directory:
+        description: >
+          Working directory for Go build commands (usually the same as
+          module-path). Examples: "cmd/glens", "cmd/tools/demo".
+        required: true
+        type: string
+      go-version:
+        description: Go toolchain version to use.
+        required: false
+        type: string
+        default: "1.25"
+      build-binary:
+        description: >
+          Set to true to cross-compile Go binaries and attach them to the
+          release. Set to false for library-only modules (e.g. pkg/logging).
+        required: false
+        type: boolean
+        default: false
+      binary-name:
+        description: >
+          Output binary name prefix (e.g. "glens", "glens-demo",
+          "glens-accuracy"). Required when build-binary is true. Must not
+          contain glob special characters.
+        required: false
+        type: string
+        default: ""
+      environment:
+        description: >
+          GitHub Environment name for deployment protection rules.
+          Create "production" and "development" environments in repository
+          Settings → Environments before using this input.
+        required: false
+        type: string
+        default: production
+      default-bump:
+        description: >
+          Fallback bump type when no conventional commit keywords are detected.
+          Must be one of: patch | minor | major.
+        required: false
+        type: string
+        default: patch
+    secrets:
+      github-token:
+        description: >
+          Token with contents:write permission. When omitted, the workflow uses
+          the calling workflow's GITHUB_TOKEN (pass secrets: inherit).
+        required: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+  # ── 1. Compute next version and create annotated tag ──────────────────────
+  tag:
+    name: Tag — ${{ inputs.module-name }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+      version: ${{ steps.bump.outputs.version }}
+      previous-tag: ${{ steps.bump.outputs.previous_tag }}
+      changelog: ${{ steps.bump.outputs.changelog }}
+      skipped: ${{ steps.bump.outputs.skipped }}
+    steps:
+      - name: Checkout (full history for tag discovery)
+        uses: actions/checkout@v5
+        with:
+          # NOTE: Full history (fetch-depth: 0) is required to discover all
+          # existing semver tags and to collect the complete commit list since
+          # the last tag. This can be slower on repos with very long histories,
+          # but keeps version detection simple and correct.
+          fetch-depth: 0
+
+      - name: Compute next version and changelog
+        id: bump
+        shell: bash
+        env:
+          TAG_PREFIX: ${{ inputs.tag-prefix }}
+          MODULE_PATH: ${{ inputs.module-path }}
+          DEFAULT_BUMP: ${{ inputs.default-bump }}
+        run: |
+          set -euo pipefail
+
+          # ── Validate default-bump ──────────────────────────────────────────
+          if [ "$DEFAULT_BUMP" != "patch" ] && \
+             [ "$DEFAULT_BUMP" != "minor" ] && \
+             [ "$DEFAULT_BUMP" != "major" ]; then
+            echo "error: invalid default-bump '${DEFAULT_BUMP}'. Must be patch, minor, or major." >&2
+            exit 1
+          fi
+
+          LAST_TAG=$(git tag -l "${TAG_PREFIX}*" --sort=-version:refname | head -1 || true)
+          echo "previous_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+
+          # ── Collect full commit bodies scoped to module path ───────────────
+          # Using %B (full body) so BREAKING CHANGE: in the commit body is detected.
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%B" -- "${MODULE_PATH}" || true)
+          else
+            COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%B" -- "${MODULE_PATH}" || true)
+          fi
+
+          # ── Skip release when no module changes exist ──────────────────────
+          if [ -z "$COMMITS" ]; then
+            echo "No commits affecting '${MODULE_PATH}' since last tag '${LAST_TAG}'. Skipping release."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skipped=false" >> "$GITHUB_OUTPUT"
+
+          # ── Determine bump type from conventional commits ──────────────────
+          # feat!: / feature!: in subject line → major
+          # BREAKING CHANGE: in commit body/footer → major
+          # feat: / feature: → minor
+          # else → default-bump
+          BUMP="$DEFAULT_BUMP"
+          if echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?!:|^BREAKING[ -]CHANGE:"; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -qEi "^(feat|feature)(\(.+\))?:"; then
+            BUMP="minor"
+          fi
+
+          # ── Parse last version (strip any pre-release suffix, e.g. -beta1) ─
+          if [ -z "$LAST_TAG" ]; then
+            LAST_VER="0.0.0"
+          else
+            LAST_VER="${LAST_TAG#"${TAG_PREFIX}"}"
+            LAST_VER=$(echo "$LAST_VER" | sed 's/[-+].*//')
+          fi
+
+          MAJOR=$(echo "$LAST_VER" | cut -d. -f1)
+          MINOR=$(echo "$LAST_VER" | cut -d. -f2)
+          PATCH=$(echo "$LAST_VER" | cut -d. -f3)
+
+          # ── Validate bump and apply ────────────────────────────────────────
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+            *)     echo "error: unexpected bump type '${BUMP}'." >&2; exit 1 ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          NEW_TAG="${TAG_PREFIX}${NEW_VERSION}"
+
+          echo "tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "bump=${BUMP}" >> "$GITHUB_OUTPUT"
+
+          # ── Build changelog (subject + short hash) ─────────────────────────
+          if [ -z "$LAST_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" -- "${MODULE_PATH}" || true)
+          else
+            CHANGELOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" -- "${MODULE_PATH}" || true)
+          fi
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="- No changes since previous release"
+          fi
+
+          {
+            echo "changelog<<GH_DELIM"
+            echo "$CHANGELOG"
+            echo "GH_DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create and push annotated tag
+        if: steps.bump.outputs.skipped != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.github-token || github.token }}
+          NEW_TAG: ${{ steps.bump.outputs.tag }}
+          CHANGELOG: ${{ steps.bump.outputs.changelog }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Use a credential helper so the token is never embedded in the remote
+          # URL (avoids token exposure in git command output and error logs).
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git config credential.helper \
+            '!f() { echo "username=x-access-token"; echo "password=${GH_TOKEN}"; }; f'
+
+          # Skip if tag already exists (e.g. workflow re-run or concurrent run).
+          if git tag -l "${NEW_TAG}" | grep -qx "${NEW_TAG}"; then
+            echo "Tag '${NEW_TAG}' already exists; skipping tag creation."
+            exit 0
+          fi
+
+          printf 'Release %s\n\n%s\n' "${NEW_TAG}" "${CHANGELOG}" \
+            | git tag -a "${NEW_TAG}" -F -
+          git push origin "${NEW_TAG}"
+
+  # ── 2. Cross-compile binaries (skipped when build-binary is false) ─────────
+  build:
+    name: Build ${{ inputs.binary-name }} / ${{ matrix.goos }}-${{ matrix.goarch }}
+    if: ${{ inputs.build-binary && needs.tag.outputs.skipped != 'true' }}
+    needs: tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Validate binary-name input
+        shell: bash
+        env:
+          BINARY_NAME: ${{ inputs.binary-name }}
+        run: |
+          if [ -z "$BINARY_NAME" ]; then
+            echo "::error::binary-name is required when build-binary is true"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache: true
+          cache-dependency-path: ${{ inputs.working-directory }}/go.mod
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+          VERSION: ${{ needs.tag.outputs.version }}
+          BINARY_NAME: ${{ inputs.binary-name }}
+        run: |
+          set -euo pipefail
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+          BINARY="${BINARY_NAME}-${GOOS}-${GOARCH}${EXT}"
+          mkdir -p "${{ runner.temp }}/dist"
+          go build \
+            -ldflags="-s -w -X main.version=${VERSION}" \
+            -o "${{ runner.temp }}/dist/${BINARY}" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.binary-name }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ runner.temp }}/dist/
+
+  # ── 3. Create GitHub Release ───────────────────────────────────────────────
+  release:
+    name: Release — ${{ inputs.module-name }}
+    needs: [tag, build]
+    # Run when tag succeeded AND (build succeeded or was skipped due to library)
+    if: >-
+      always() &&
+      needs.tag.result == 'success' &&
+      needs.tag.outputs.skipped != 'true' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download binary artifacts
+        if: ${{ inputs.build-binary }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.binary-name }}-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Generate checksums
+        if: ${{ inputs.build-binary }}
+        working-directory: dist
+        run: sha256sum * > checksums.txt
+
+      - name: Create GitHub Release (library — no binaries)
+        if: ${{ !inputs.build-binary }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.tag.outputs.tag }}
+          name: "${{ inputs.module-name }} ${{ needs.tag.outputs.version }}"
+          body: |
+            ## What's Changed
+
+            ${{ needs.tag.outputs.changelog }}
+
+            **Full Changelog**: ${{ github.server_url }}/${{ github.repository }}/commits/${{ needs.tag.outputs.tag }}
+          token: ${{ secrets.github-token || github.token }}
+
+      - name: Create GitHub Release (binary — with assets)
+        if: ${{ inputs.build-binary }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.tag.outputs.tag }}
+          name: "${{ inputs.module-name }} ${{ needs.tag.outputs.version }}"
+          body: |
+            ## What's Changed
+
+            ${{ needs.tag.outputs.changelog }}
+
+            **Full Changelog**: ${{ github.server_url }}/${{ github.repository }}/commits/${{ needs.tag.outputs.tag }}
+          files: dist/*
+          token: ${{ secrets.github-token || github.token }}
