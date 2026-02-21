@@ -2,106 +2,87 @@
 
 > For contributors and developers working on Glens
 
-**Architecture**: See [diagrams/ARCHITECTURE.md](diagrams/ARCHITECTURE.md) for visual system design.
+## Workspace structure
+
+```
+go.work                          # Go workspace root (no go.mod here)
+├── pkg/logging/                 # module glens/pkg/logging
+│   ├── logging.go
+│   ├── Makefile
+│   └── README.md
+├── cmd/glens/                   # module glens/tools/glens
+│   ├── main.go
+│   ├── cmd/                     # CLI commands (root, analyze, cleanup, models)
+│   ├── internal/                # ai, generator, github, parser, reporter
+│   ├── Makefile
+│   └── README.md
+├── cmd/tools/demo/              # module glens/tools/demo
+│   ├── internal/loader/ render/
+│   ├── Makefile
+│   └── README.md
+└── cmd/tools/accuracy/          # module glens/tools/accuracy
+    ├── internal/analyze/ report/
+    ├── Makefile
+    └── README.md
+```
+
+**`pkg/`** — generic reusable libraries; no `internal/` imports; independently versioned.  
+**`cmd/*/internal/`** — module-private code; never imported across module boundaries.
 
 ## Setup
 
 ```bash
-# Clone and setup environment
-git clone <repo>
+# Clone
+git clone https://github.com/aydabd/glens
 cd glens
-make setup          # Creates micromamba env and installs tools
 
-# Activate environment
-micromamba activate glens-dev
-
-# Build and test
-make build
-make test
+# Create micromamba environment (optional — plain go also works)
+make env
 ```
 
-## Project Structure
+## Development workflow
 
-```txt
-cmd/                   # CLI commands
-  ├── root.go         # Root command, config loading
-  ├── analyze.go      # Main analysis logic
-  └── models.go       # AI model management
-
-pkg/
-  ├── ai/            # AI model clients (OpenAI, Anthropic, Ollama, Google)
-  ├── generator/     # Test generation and execution
-  ├── github/        # GitHub API integration
-  ├── parser/        # OpenAPI spec parsing
-  └── reporter/      # Report generation (MD, HTML, JSON)
-
-configs/             # Example configurations
-docs/                # Documentation + diagrams
-```
-
-See the [File Structure Diagram](diagrams/ARCHITECTURE.md#file-structure) for visual representation.
-
-## Development Workflow
+Work inside the module you are changing:
 
 ```bash
-# 1. Make changes
-vim cmd/analyze.go
+cd cmd/glens          # or cmd/tools/demo, cmd/tools/accuracy, pkg/logging
 
-# 2. Format code
-make fmt
-
-# 3. Run tests
-make test
-
-# 4. Check for issues
-make lint
-
-# 5. Build
-make build
-
-# 6. Test locally
-./build/glens analyze <spec-url>
+make fmt              # format
+make vet              # go vet
+make lint             # golangci-lint
+make test             # run tests with race detector
+make build            # build binary
+make all              # fmt-check + vet + lint + test  (same as CI)
 ```
 
-## Code Principles
+`make all` in any module directory is identical to what CI runs — if it passes locally it passes in CI.
 
-### Simplicity
+## Adding a new module
 
-- Choose the simplest solution
-- Avoid premature optimization
-- Keep functions small (<50 lines)
+1. Create the directory: `cmd/tools/<name>/`
+2. Run `go mod init glens/tools/<name>`
+3. Add `use ./cmd/tools/<name>` to `go.work`
+4. Copy `Makefile` from an existing tool module
+5. Add a `.pre-commit-config.yaml` covering `go-fmt`, `go-vet`, `golangci-lint`
+6. Add `.github/workflows/tool-<name>.yml` triggered on `cmd/tools/<name>/**`
+7. Add the binary to `.github/workflows/release.yml`
 
-### Go Idioms
+## Package conventions
 
-- Follow `gofmt` and `golint` standards
-- Explicit error handling
-- Use standard library when possible
+- `pkg/` — generic libraries; zero `internal/` imports; can be used by any Go project
+- `cmd/*/internal/` — module-private; never import from another module
+- All packages follow `gofmt` + `golangci-lint` standards
+- Functions ≤ 50 lines; explicit error handling; no global state
 
-### Maintenance
+## Key components (cmd/glens)
 
-- Write self-documenting code
-- Add comments only for complex logic
-- Keep file structure flat
+### Issue creation (`cmd/analyze.go`)
 
-## Key Components
+Issues are created **only** when tests compile and produce assertion failures. Connection errors, compilation errors, and passing tests never produce issues. `isRealTestFailure()` implements this distinction.
 
-### GitHub Issue Creation (`cmd/analyze.go`)
+### AI layer (`internal/ai/`)
 
-**Critical Logic**: Issues created ONLY for real test failures
-
-```go
-// isRealTestFailure() distinguishes:
-// - Real failures: Assertion errors, spec violations
-// - Not failures: Connection errors, compilation errors
-
-if isRealTestFailure(err, result) {
-    githubClient.CreateEndpointIssue(...)
-}
-```
-
-### AI Integration (`pkg/ai/`)
-
-Each AI provider implements `AIClient` interface:
+Every provider implements the `AIClient` interface:
 
 ```go
 type AIClient interface {
@@ -109,193 +90,75 @@ type AIClient interface {
 }
 ```
 
-### Test Execution (`pkg/generator/`)
+Add a new provider by implementing the interface and registering it in `NewManager()`.
 
-Tests are:
+### Report generation (`internal/reporter/`)
 
-1. Generated by AI
-2. Written to temp directory
-3. Executed with `go test`
-4. Results parsed and analyzed
-
-## Adding Features
-
-### New CLI Flag
-
-```go
-// cmd/analyze.go
-analyzeCmd.Flags().String("new-flag", "default", "Description")
-_ = viper.BindPFlag("config.key", analyzeCmd.Flags().Lookup("new-flag"))
-```
-
-### New AI Provider
-
-1. Implement `AIClient` interface in `pkg/ai/`
-2. Add to `NewManager()` in `pkg/ai/interfaces.go`
-3. Update config example
-
-### New Report Format
-
-1. Implement in `pkg/reporter/`
-2. Add format option to `GenerateReport()`
-3. Update CLI flag
+`SuccessRate` is computed from actual pass/total counts — never hardcoded.
 
 ## Testing
 
-### Unit Tests
+Use table-driven tests with `testify`:
 
 ```go
-// Use table-driven tests
-func TestFunction(t *testing.T) {
+func TestSomething(t *testing.T) {
     tests := []struct {
         name    string
-        input   Input
-        want    Output
+        input   string
+        want    string
         wantErr bool
     }{
-        {"case1", input1, output1, false},
-        {"case2", input2, output2, true},
+        {"valid", "input", "output", false},
+        {"invalid", "", "", true},
     }
-
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := Function(tt.input)
             if tt.wantErr {
-                require.Error(t, err)
+                assert.Error(t, err)
                 return
             }
-            require.NoError(t, err)
+            assert.NoError(t, err)
             assert.Equal(t, tt.want, got)
         })
     }
 }
 ```
 
-### Integration Tests
+Integration tests that need a real spec use `test_specs/sample_api.json` with no network dependency.
+
+## CI workflows
+
+| Workflow | Trigger | What it runs |
+|----------|---------|--------------|
+| `pkg-logging.yml` | `pkg/logging/**` | `make all` + `go test` |
+| `glens.yml` | `cmd/glens/**` | `make all` + `go test` |
+| `tool-demo.yml` | `cmd/tools/demo/**` | `make all` + `go test` |
+| `tool-accuracy.yml` | `cmd/tools/accuracy/**` | `make all` + `go test` |
+| `release.yml` | `v*` tags | cross-platform builds for all modules |
+
+Each workflow is fully independent — a change in one module only triggers that module's CI.
+
+## Release
+
+Pushing a `v*` tag triggers `release.yml`, which builds all binaries for five platforms and publishes a GitHub release with `checksums.txt`.
 
 ```bash
-# Test with real API
-./build/glens analyze https://petstore3.swagger.io/api/v3/openapi.json \
-  --create-issues=false \
-  --op-id=getPetById
+git tag v1.2.3
+git push origin v1.2.3
 ```
 
-## Common Tasks
-
-### Update Dependencies
+Individual library tags use the module prefix:
 
 ```bash
-make update-deps
+git tag pkg/logging/v0.2.0
+git push origin pkg/logging/v0.2.0
 ```
 
-### Run Linters
+## Code review checklist
 
-```bash
-make lint
-make security
-```
-
-### Generate Coverage
-
-```bash
-make test
-# Open build/reports/coverage.html
-```
-
-### Profile Performance
-
-```bash
-make profile
-go tool pprof build/profiles/cpu.prof
-```
-
-## Debugging
-
-### Enable Debug Logging
-
-```bash
-./build/glens analyze <url> --debug --log-format=console
-```
-
-### Common Issues
-
-#### Tests fail with "go: not found"
-
-- Activate micromamba environment: `micromamba activate glens-dev`
-
-#### Ollama connection errors
-
-- Start server: `make ollama-serve`
-- Check status: `make ollama-status`
-
-#### GitHub API errors
-
-- Verify token: `echo $GITHUB_TOKEN`
-- Check permissions: Token needs `repo` scope
-
-## Release Process
-
-```bash
-# 1. Update version
-# 2. Run full test suite
-make ci
-
-# 3. Build for all platforms
-make build-all
-
-# 4. Create release
-make release
-
-# Artifacts in build/dist/
-```
-
-## Code Review Checklist
-
-- [ ] Follows Go idioms
-- [ ] Has tests for new functionality
-- [ ] Updates docs if needed (rarely)
-- [ ] Passes linters
-- [ ] Error handling is explicit
-- [ ] Functions are small and focused
-- [ ] No premature optimization
-- [ ] Minimal dependencies
-
-## Documentation
-
-**When to update docs:**
-
-- CLI interface changes
-- Configuration format changes
-- Setup process changes
-
-**When NOT to update docs:**
-
-- Internal refactoring
-- Bug fixes (unless behavior changes)
-- Performance improvements
-
-## Getting Help
-
-- Check existing issues
-- Run with `--debug`
-- Review logs in `report.md`
-- See `.claude.md` for AI assistant instructions
-
-## Contributing
-
-1. Keep it simple
-2. Write tests
-3. Follow Go conventions
-4. Update docs only if necessary
-5. Think long-term maintenance
-
-## Useful Commands
-
-```bash
-make help           # Show all commands
-make env            # Create/update environment
-make shell          # Enter environment shell
-make clean          # Clean build artifacts
-make docs           # Generate documentation
-make ci             # Run CI pipeline locally
-```
+- [ ] Functions ≤ 50 lines
+- [ ] Explicit error handling (no `_` for errors)
+- [ ] Table-driven tests for new functions
+- [ ] `make all` passes in the changed module
+- [ ] Docs updated only if CLI/config/setup changed

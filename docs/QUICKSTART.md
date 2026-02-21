@@ -1,57 +1,46 @@
 # Glens Quick Start Guide
 
-> OpenAPI Integration Test Generator with AI - Simple, Fast, Effective
+> OpenAPI Integration Test Generator with AI
 
 ## What It Does
 
-Analyzes OpenAPI specs, generates tests using AI, runs them, and creates GitHub issues **only when tests fail**.
-
-**Visual Guide**: See [Architecture Diagrams](diagrams/ARCHITECTURE.md) for flow diagrams and system design.
+Parses OpenAPI specs, generates integration tests using AI, runs them, and creates GitHub issues **only when tests fail**.
 
 ## Install
 
+### Option 1 — Download binary (no Go required)
+
+Download the binary for your platform from the [releases page](https://github.com/aydabd/glens/releases) and run it directly.
+
+### Option 2 — Build from source
+
 ```bash
-git clone <repo>
-cd glens
-make build
+git clone https://github.com/aydabd/glens
+cd glens/cmd/glens
+make build          # binary → ../../build/glens
 ```
 
 ## Basic Usage
 
 ```bash
-# Setup (required once)
+# Required for issue creation
 export GITHUB_TOKEN="ghp_your_token"
 export GITHUB_REPOSITORY="owner/repo"
 
 # Run with local Ollama (free, private)
-./build/glens analyze https://api.example.com/openapi.json \
-  --ai-models=ollama
+./build/glens analyze https://api.example.com/openapi.json --ai-models=ollama
 
 # Run with OpenAI GPT-4
 export OPENAI_API_KEY="sk_your_key"
-./build/glens analyze https://api.example.com/openapi.json \
-  --ai-models=gpt4
-```
+./build/glens analyze https://api.example.com/openapi.json --ai-models=gpt4
 
-## Common Commands
-
-```bash
-# Test specific endpoint
-make test-endpoint OP_ID=getUserById
-
-# Test without creating issues (dry run)
-./build/glens analyze URL --create-issues=false
-
-# Use specific AI model
-./build/glens analyze URL --ai-models=ollama:codellama:7b-instruct
-
-# Multiple models
-./build/glens analyze URL --ai-models=gpt4,ollama
+# Dry run (no issue creation)
+./build/glens analyze https://api.example.com/openapi.json --create-issues=false
 ```
 
 ## Configuration
 
-Create `configs/config.yaml`:
+Create `configs/config.yaml` inside `cmd/glens/`:
 
 ```yaml
 github:
@@ -64,135 +53,70 @@ ai_models:
     model: "gpt-4-turbo"
 ```
 
-## GitHub Issues
+## GitHub Issue Logic
 
-Issues are created **ONLY** when:
+Issues are created **only** when:
+- Tests compile and run successfully
+- Tests fail with assertion errors (spec violations)
 
-- ✅ Tests fail with assertion errors
-- ✅ Response doesn't match OpenAPI spec
-- ✅ Status codes don't match
+Issues are **not** created when:
+- Connection to the server fails
+- Test compilation fails
+- All tests pass
 
-Issues are **NOT** created when:
-
-- ❌ Connection fails (infrastructure issue)
-- ❌ Test compilation fails (setup issue)
-- ❌ All tests pass
-
-## Local AI (Ollama)
-
-Free, private, no API costs:
+## Makefile Commands (run from `cmd/glens/`)
 
 ```bash
-# Setup Ollama (in micromamba environment)
-make ollama-pull-codellama
-
-# Start server
-make ollama-serve
-
-# Run tests
-make run-ollama
+make all        # fmt-check + vet + lint + test (same as CI)
+make build      # Build binary
+make test       # Run tests with race detector
+make fmt        # Format code
+make lint       # Run golangci-lint
+make clean      # Remove build artifacts
 ```
 
-## Makefile Commands
+## Flags
 
-```bash
-make build              # Build binary
-make test               # Run tests with coverage
-make run                # Run with default spec
-make run-ollama         # Run with Ollama
-make test-endpoint      # Test specific endpoint (set OP_ID=...)
+```
+--ai-models strings    AI models to use (default: gpt4)
+--github-repo string   Target repository (owner/repo)
+--create-issues        Create issues on failures (default: true)
+--run-tests            Execute tests (default: true)
+--op-id string         Target a specific endpoint by operationId
+--output string        Report file path (default: reports/report.md)
+--debug                Enable debug logging
 ```
 
 ## Environment Variables
 
-| Variable            | Required   | Purpose                  |
-| ------------------- | ---------- | ------------------------ |
-| `GITHUB_TOKEN`      | For issues | GitHub authentication    |
-| `GITHUB_REPOSITORY` | For issues | Target repo (owner/repo) |
-| `OPENAI_API_KEY`    | For GPT    | OpenAI API access        |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `GITHUB_TOKEN` | For issue creation | GitHub authentication |
+| `GITHUB_REPOSITORY` | For issue creation | Target repo (`owner/repo`) |
+| `OPENAI_API_KEY` | For GPT-4 | OpenAI API |
+| `ANTHROPIC_API_KEY` | For Claude | Anthropic API |
+| `GOOGLE_API_KEY` | For Gemini | Google API |
 
-## Flags
+## Tools
 
-```bash
---ai-models strings       # AI models to use (default: gpt4)
---github-repo string      # Target repository
---create-issues           # Create issues on failures (default: true)
---run-tests              # Execute tests (default: true)
---op-id string           # Target specific endpoint
---output string          # Report file (default: reports/report.md)
---debug                  # Enable debug logging
-```
+Two standalone utility binaries are also available:
 
-## Examples
-
-### Example 1: Quick Test
-
-```bash
-make run
-```
-
-### Example 2: Production Run
-
-```bash
-export GITHUB_TOKEN=$(gh auth token)
-export GITHUB_REPOSITORY="myorg/myapi"
-export OPENAI_API_KEY="sk_xxx"
-
-./build/glens analyze https://api.production.com/openapi.json \
-  --ai-models=gpt4 \
-  --create-issues
-```
-
-### Example 3: Local Development
-
-```bash
-make ollama-serve &
-./build/glens analyze ./specs/local-api.yaml \
-  --ai-models=ollama \
-  --create-issues=false
-```
+- **`glens-demo`** — renders an OpenAPI spec as a human-readable summary. See [cmd/tools/demo/README.md](../cmd/tools/demo/README.md).
+- **`glens-accuracy`** — produces an endpoint accuracy report for one or more specs. See [cmd/tools/accuracy/README.md](../cmd/tools/accuracy/README.md).
 
 ## Troubleshooting
 
-### GitHub token required
+**GitHub token missing**
 
 ```bash
 export GITHUB_TOKEN=$(gh auth token)
 ```
 
-### Ollama not responding
+**No tests generated**
+- Confirm the OpenAPI spec URL is reachable
+- Verify the AI model is accessible
+- Add `--debug` for detailed logs
 
-```bash
-make ollama-serve
-```
+**Reports**
 
-### No tests generated
-
-- Check OpenAPI spec is valid
-- Verify AI model is accessible
-- Use `--debug` flag for details
-
-## Report Output
-
-Check `reports/report.md` for:
-
-- Endpoint analysis
-- Test results
-- AI model comparison
-- Issue numbers (if created)
-
-**Note:** All reports are generated in the `reports/` directory, which is gitignored.
-
-## Get Help
-
-```bash
-./build/glens analyze --help
-make help
-```
-
-## Next Steps
-
-- Review generated report: `cat reports/report.md`
-- Check created issues: `gh issue list --repo <owner>/<repo>`
-- Customize: Edit `configs/config.yaml`
-- For development: See `docs/DEVELOPMENT.md`
+Reports are written to `reports/report.md` (gitignored). Open with any Markdown viewer.
