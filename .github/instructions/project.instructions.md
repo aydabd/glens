@@ -100,10 +100,7 @@ Each skill file is ≤ 100 lines and covers one focused topic.
 | `testing-patterns` | Go-specific patterns: table-driven tests, mocks, helpers, assertions |
 | `testing-integration` | Integration and end-to-end testing design and helper patterns |
 
-Use a skill by name in your prompt: `/testing-strategy`, `/testing-patterns`, `/testing-integration`.
 
-@.github/instructions/testing-strategy.instructions.md
-@.github/instructions/testing-patterns.instructions.md
 @.github/instructions/testing-integration.instructions.md
 
 ## Testing
