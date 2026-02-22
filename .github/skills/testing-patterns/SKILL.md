@@ -2,7 +2,7 @@
 name: testing-patterns
 description: >
   Go-specific test patterns for this project. Use this when writing Go tests —
-  table-driven tests, interface mocking, test helpers, testify assertions,
+  table-driven tests, interface mocking, reusable setup functions, testify assertions,
   and parallel sub-tests.
 ---
 
@@ -72,9 +72,9 @@ func (m *mockHTTPClient) Do(_ *http.Request) (*http.Response, error) {
 
 Keep mocks in the same package as the test that uses them.
 
-## Test Helpers
+## Test Fixture Setup
 
-Extract repetitive setup into helpers tagged with `t.Helper()`:
+Extract repetitive setup into named setup functions tagged with `t.Helper()`:
 
 ```go
 func newTestEndpoint(t *testing.T, path, method string) *Endpoint {
@@ -97,5 +97,5 @@ Use `require` (not `assert`) when subsequent assertions are meaningless after a 
 
 ## Parallel Tests
 
-Mark independent sub-tests parallel to shorten the test run with `t.Parallel()`.
-Do **not** use it when tests share mutable state or write to the same file.
+Mark independent sub-tests parallel with `t.Parallel()`. Do **not** use it when
+tests share mutable state or write to the same file.

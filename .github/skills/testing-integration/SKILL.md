@@ -58,7 +58,7 @@ Before declaring a feature integration-tested, verify:
 - **Permission error** — unreadable or missing file path.
 - **Concurrent execution** — two goroutines/workers on the same spec.
 
-## Spec-Path Helper Pattern
+## Locating Spec Files in Tests
 
 Use `runtime.Caller` to locate `test_specs/` without hardcoding absolute paths:
 
@@ -77,7 +77,7 @@ func sampleSpecPath(t *testing.T) string {
 
 Adjust the number of `".."` segments to match the depth of the test file.
 
-## Build Helper Pattern
+## Compiling the Binary for E2E Tests
 
 Compile the binary once per test run and cache the path:
 

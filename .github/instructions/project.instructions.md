@@ -97,11 +97,9 @@ Each skill file is ≤ 100 lines and covers one focused topic.
 | Skill directory | Purpose |
 |---|---|
 | `testing-strategy` | Testing philosophy, value-driven approach, naming, corner-case checklist |
-| `testing-patterns` | Go-specific patterns: table-driven tests, mocks, helpers, assertions |
-| `testing-integration` | Integration and end-to-end testing design and helper patterns |
+| `testing-patterns` | Go-specific patterns: table-driven tests, mocks, setup functions, assertions |
+| `testing-integration` | Integration and end-to-end testing design and fixture patterns |
 
-
-@.github/instructions/testing-integration.instructions.md
 
 ## Testing
 
