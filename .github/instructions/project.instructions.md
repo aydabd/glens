@@ -90,15 +90,17 @@ distinction when modifying test-failure detection logic.
 
 ## Skills
 
-Specialised agent skills live in `.github/instructions/` alongside this file.
+Specialised agent skills live in `.github/skills/` (Copilot CLI / Claude CLI format).
+Each skill directory contains a `SKILL.md` with `name` and `description` frontmatter.
 Each skill file is ≤ 100 lines and covers one focused topic.
-Read the relevant skill before working in that area.
 
-| Skill file | Purpose |
+| Skill directory | Purpose |
 |---|---|
-| `testing-strategy.instructions.md` | Testing philosophy, value-driven approach, naming, corner-case checklist |
-| `testing-patterns.instructions.md` | Go-specific patterns: table-driven tests, mocks, helpers, assertions |
-| `testing-integration.instructions.md` | Integration and end-to-end testing design and helper patterns |
+| `testing-strategy` | Testing philosophy, value-driven approach, naming, corner-case checklist |
+| `testing-patterns` | Go-specific patterns: table-driven tests, mocks, helpers, assertions |
+| `testing-integration` | Integration and end-to-end testing design and helper patterns |
+
+Use a skill by name in your prompt: `/testing-strategy`, `/testing-patterns`, `/testing-integration`.
 
 @.github/instructions/testing-strategy.instructions.md
 @.github/instructions/testing-patterns.instructions.md
