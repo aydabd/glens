@@ -88,6 +88,22 @@ Issues are **not** created when:
 **Key function**: `isRealTestFailure()` in `cmd/glens/cmd/analyze.go` — preserve this
 distinction when modifying test-failure detection logic.
 
+## Skills
+
+Specialised agent skills live in `.github/instructions/` alongside this file.
+Each skill file is ≤ 100 lines and covers one focused topic.
+Read the relevant skill before working in that area.
+
+| Skill file | Purpose |
+|---|---|
+| `testing-strategy.instructions.md` | Testing philosophy, value-driven approach, naming, corner-case checklist |
+| `testing-patterns.instructions.md` | Go-specific patterns: table-driven tests, mocks, helpers, assertions |
+| `testing-integration.instructions.md` | Integration and end-to-end testing design and helper patterns |
+
+@.github/instructions/testing-strategy.instructions.md
+@.github/instructions/testing-patterns.instructions.md
+@.github/instructions/testing-integration.instructions.md
+
 ## Testing
 
 Use table-driven tests with `testify`:
