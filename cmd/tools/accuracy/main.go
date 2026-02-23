@@ -11,7 +11,8 @@ import (
 	"glens/tools/accuracy/internal/report"
 )
 
-const version = "0.1.0"
+// version is set at build time via -ldflags="-X main.version=<tag>".
+var version = "0.1.0"
 
 func main() {
 	var outputFile string
