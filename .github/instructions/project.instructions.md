@@ -88,6 +88,19 @@ Issues are **not** created when:
 **Key function**: `isRealTestFailure()` in `cmd/glens/cmd/analyze.go` — preserve this
 distinction when modifying test-failure detection logic.
 
+## Skills
+
+Specialised agent skills live in `.github/skills/` (Copilot CLI / Claude CLI format).
+Each skill directory contains a `SKILL.md` with `name` and `description` frontmatter.
+Each skill file is ≤ 100 lines and covers one focused topic.
+
+| Skill directory | Purpose |
+|---|---|
+| `testing-strategy` | Testing philosophy, value-driven approach, naming, corner-case checklist |
+| `testing-patterns` | Go-specific patterns: table-driven tests, mocks, setup functions, assertions |
+| `testing-integration` | Integration and end-to-end testing design and fixture patterns |
+
+
 ## Testing
 
 Use table-driven tests with `testify`:
