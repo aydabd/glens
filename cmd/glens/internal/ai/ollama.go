@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -70,6 +71,20 @@ type OllamaModel struct {
 // OllamaModelsResponse represents the response from /api/tags endpoint
 type OllamaModelsResponse struct {
 	Models []OllamaModel `json:"models"`
+}
+
+// OllamaPullRequest represents the request structure for /api/pull
+type OllamaPullRequest struct {
+	Name   string `json:"name"`
+	Stream bool   `json:"stream"`
+}
+
+// OllamaPullResponse represents a single status line from the pull stream
+type OllamaPullResponse struct {
+	Status    string `json:"status"`
+	Digest    string `json:"digest,omitempty"`
+	Total     int64  `json:"total,omitempty"`
+	Completed int64  `json:"completed,omitempty"`
 }
 
 // NewOllamaClient creates a new Ollama client
@@ -253,6 +268,64 @@ func (c *OllamaClient) ListModels(ctx context.Context) ([]OllamaModel, error) {
 	}
 
 	return modelsResp.Models, nil
+}
+
+// PullModel pulls (downloads) a model from the Ollama registry.
+// It streams progress status lines to the provided writer (pass os.Stdout for
+// live terminal feedback, or io.Discard to suppress output).
+func (c *OllamaClient) PullModel(ctx context.Context, modelName string, progress io.Writer) error {
+	pullReq := OllamaPullRequest{
+		Name:   modelName,
+		Stream: true,
+	}
+
+	jsonData, err := json.Marshal(pullReq)
+	if err != nil {
+		return fmt.Errorf("failed to marshal pull request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/api/pull", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create pull request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("failed to pull model %q: %w", modelName, err)
+	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.Debug().Err(closeErr).Msg("failed to close pull response body")
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("ollama pull returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		var line OllamaPullResponse
+		if err := json.Unmarshal(scanner.Bytes(), &line); err != nil {
+			continue
+		}
+		if line.Status != "" {
+			if line.Total > 0 {
+				pct := float64(line.Completed) / float64(line.Total) * 100
+				fmt.Fprintf(progress, "\r%s: %.1f%%", line.Status, pct)
+			} else {
+				fmt.Fprintf(progress, "\r%s", line.Status)
+			}
+		}
+	}
+	fmt.Fprintln(progress)
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading pull stream: %w", err)
+	}
+	return nil
 }
 
 // generate makes a generation request to Ollama
