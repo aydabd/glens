@@ -45,7 +45,10 @@ func init() {
 	// Endpoint filtering options
 	analyzeCmd.Flags().String("op-id", "", "Target specific endpoint by operation ID (e.g., getPetById, addPet)")
 
-	_ = viper.BindPFlag("ai_models", analyzeCmd.Flags().Lookup("ai-models"))
+	// Bind flag to a dedicated key so it does not shadow the ai_models config
+	// section (which is a YAML map of per-model settings like base URLs and API
+	// keys). Using "run.ai_models" keeps "ai_models.*" readable via viper.Sub.
+	_ = viper.BindPFlag("run.ai_models", analyzeCmd.Flags().Lookup("ai-models"))
 	_ = viper.BindPFlag("github.repository", analyzeCmd.Flags().Lookup("github-repo"))
 	_ = viper.BindPFlag("test_framework", analyzeCmd.Flags().Lookup("test-framework"))
 	_ = viper.BindPFlag("create_issues", analyzeCmd.Flags().Lookup("create-issues"))
@@ -67,7 +70,7 @@ func runAnalyze(cmd *cobra.Command, args []string) error {
 
 	log.Info().
 		Str("openapi_url", openapiURL).
-		Strs("ai_models", viper.GetStringSlice("ai_models")).
+		Strs("ai_models", viper.GetStringSlice("run.ai_models")).
 		Str("github_repo", viper.GetString("github.repository")).
 		Msg("Starting OpenAPI analysis")
 
@@ -107,7 +110,7 @@ func runAnalyze(cmd *cobra.Command, args []string) error {
 
 	// Initialize AI clients
 	log.Info().Msg("Initializing AI model clients")
-	aiManager, err := ai.NewManager(viper.GetStringSlice("ai_models"))
+	aiManager, err := ai.NewManager(viper.GetStringSlice("run.ai_models"))
 	if err != nil {
 		return fmt.Errorf("failed to initialize AI clients: %w", err)
 	}
@@ -176,7 +179,7 @@ func runAnalyze(cmd *cobra.Command, args []string) error {
 		failedModels := []string{}
 
 		// Generate and run tests for each AI model
-		for _, modelName := range viper.GetStringSlice("ai_models") {
+		for _, modelName := range viper.GetStringSlice("run.ai_models") {
 			log.Info().
 				Str("ai_model", modelName).
 				Str("endpoint", fmt.Sprintf("%s %s", endpoint.Method, endpoint.Path)).

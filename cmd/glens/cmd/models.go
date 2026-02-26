@@ -46,6 +46,23 @@ var modelsOllamaListCmd = &cobra.Command{
 	RunE:  runOllamaList,
 }
 
+var modelsOllamaPullCmd = &cobra.Command{
+	Use:   "pull [model]",
+	Short: "Pull an Ollama model from the registry",
+	Long: `Pull (download) a model from the Ollama registry for fully local use.
+No cloud account or API key is required.
+
+Examples:
+  glens models ollama pull mistral          # Mistral 7B
+  glens models ollama pull mistral-nemo     # Mistral Nemo 12B
+  glens models ollama pull llama3           # Meta Llama 3
+  glens models ollama pull phi4             # Microsoft Phi-4
+  glens models ollama pull gemma2           # Google Gemma 2
+  glens models ollama pull codellama:7b-instruct`,
+	Args: cobra.ExactArgs(1),
+	RunE: runOllamaPull,
+}
+
 var modelsOllamaStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check Ollama server status",
@@ -64,6 +81,7 @@ func init() {
 	// Add Ollama subcommands
 	modelsOllamaCmd.AddCommand(modelsOllamaListCmd)
 	modelsOllamaCmd.AddCommand(modelsOllamaStatusCmd)
+	modelsOllamaCmd.AddCommand(modelsOllamaPullCmd)
 }
 
 func runModelsList(_ *cobra.Command, _ []string) error {
@@ -71,13 +89,33 @@ func runModelsList(_ *cobra.Command, _ []string) error {
 	fmt.Println("=====================")
 
 	// Cloud providers
-	fmt.Println("\n🌐 Cloud Providers:")
+	fmt.Println("\n🌐 Cloud Providers (require API keys):")
 	fmt.Println("  • gpt4         - OpenAI GPT-4 Turbo")
 	fmt.Println("  • sonnet4      - Anthropic Claude 3.5 Sonnet")
 	fmt.Println("  • flash-pro    - Google Gemini 1.5 Flash Pro")
+	fmt.Println("  • mistral      - Mistral AI (cloud)")
+
+	// Local open-source model shortcuts
+	fmt.Println("\n🔓 Local Open-Source Models (no cloud/API-key required):")
+	fmt.Println("  Mistral:")
+	fmt.Println("    • mistral-local, mistral7b    → mistral (7B)")
+	fmt.Println("    • mistral-nemo-local          → mistral-nemo (12B)")
+	fmt.Println("    • mistral-small-local         → mistral-small")
+	fmt.Println("  Meta Llama:")
+	fmt.Println("    • llama3, llama3-local        → llama3")
+	fmt.Println("    • llama3.1, llama3.1-local    → llama3.1")
+	fmt.Println("    • llama3.2, llama3.2-local    → llama3.2")
+	fmt.Println("  Microsoft Phi:")
+	fmt.Println("    • phi3, phi3-local            → phi3")
+	fmt.Println("    • phi4, phi4-local            → phi4")
+	fmt.Println("  Google Gemma (open-weights):")
+	fmt.Println("    • gemma2, gemma2-local        → gemma2")
+	fmt.Println("    • gemma3, gemma3-local        → gemma3")
+	fmt.Println("  Custom: ollama:<model>          e.g. ollama:mistral:7b-instruct")
+	fmt.Println("\n💡 Pull a model first:  glens models ollama pull <model-name>")
 
 	// Check Ollama models
-	fmt.Println("\n🏠 Local Models (Ollama):")
+	fmt.Println("\n🏠 Installed Ollama Models:")
 
 	ollamaClient, err := ai.NewOllamaClient("")
 	if err != nil {
@@ -92,16 +130,16 @@ func runModelsList(_ *cobra.Command, _ []string) error {
 	if err != nil {
 		fmt.Printf("  ❌ Ollama not accessible: %v\n", err)
 		fmt.Println("\n💡 Install Ollama: https://ollama.ai")
-		fmt.Println("💡 Download a coding model: ollama pull codellama:7b-instruct")
+		fmt.Println("💡 Then pull a model: glens models ollama pull mistral")
 		return nil
 	}
 
 	if len(models) == 0 {
 		fmt.Println("  📭 No models installed")
-		fmt.Println("\n💡 Recommended coding models:")
-		fmt.Println("     ollama pull codellama:7b-instruct")
-		fmt.Println("     ollama pull deepseek-coder:6.7b-instruct")
-		fmt.Println("     ollama pull qwen2.5-coder:7b-instruct")
+		fmt.Println("\n💡 Recommended models (no API key needed):")
+		fmt.Println("     glens models ollama pull mistral")
+		fmt.Println("     glens models ollama pull llama3")
+		fmt.Println("     glens models ollama pull codellama:7b-instruct")
 		return nil
 	}
 
@@ -125,9 +163,9 @@ func runModelsList(_ *cobra.Command, _ []string) error {
 	}
 
 	fmt.Println("\n💡 Usage examples:")
-	fmt.Printf("  ./glens analyze spec.json --ai-models ollama\n")
-	fmt.Printf("  ./glens analyze spec.json --ai-models ollama:%s\n", models[0].Name)
-	fmt.Printf("  ./glens analyze spec.json --ai-models gpt4,ollama\n")
+	fmt.Printf("  glens analyze spec.json --ai-models mistral-local\n")
+	fmt.Printf("  glens analyze spec.json --ai-models ollama:%s\n", models[0].Name)
+	fmt.Printf("  glens analyze spec.json --ai-models llama3-local,mistral-local\n")
 
 	return nil
 }
@@ -172,6 +210,9 @@ func runModelsStatus(_ *cobra.Command, _ []string) error {
 }
 
 func runOllamaList(_ *cobra.Command, _ []string) error {
+	// digestDisplayLength is the number of hex characters shown from a model
+	// digest before truncating with "..." for readability.
+	const digestDisplayLength = 12
 	ollamaClient, err := ai.NewOllamaClient("")
 	if err != nil {
 		return fmt.Errorf("failed to create Ollama client: %w", err)
@@ -207,7 +248,10 @@ func runOllamaList(_ *cobra.Command, _ []string) error {
 	for _, model := range models {
 		size := formatSize(model.Size)
 		modified := model.ModifiedAt.Format("2006-01-02 15:04")
-		digest := model.Digest[:12] + "..."
+		digest := model.Digest
+		if len(digest) > digestDisplayLength {
+			digest = digest[:digestDisplayLength] + "..."
+		}
 		if _, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", model.Name, size, modified, digest); err != nil {
 			return fmt.Errorf("failed to write model data: %w", err)
 		}
@@ -285,4 +329,30 @@ func isCodeModel(name string) bool {
 		}
 	}
 	return false
+}
+
+func runOllamaPull(_ *cobra.Command, args []string) error {
+	modelName := args[0]
+
+	ollamaClient, err := ai.NewOllamaClient("")
+	if err != nil {
+		return fmt.Errorf("failed to create Ollama client: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	fmt.Printf("⬇️  Pulling model %q from Ollama registry...\n", modelName)
+	fmt.Println("   (This may take several minutes for large models)")
+
+	if err := ollamaClient.PullModel(ctx, modelName, os.Stdout); err != nil {
+		fmt.Printf("\n❌ Failed to pull model: %v\n", err)
+		fmt.Println("\n💡 Make sure Ollama is running: ollama serve")
+		return fmt.Errorf("failed to pull model %q: %w", modelName, err)
+	}
+
+	fmt.Printf("\n✅ Model %q pulled successfully\n", modelName)
+	fmt.Printf("\n💡 Use it with:\n")
+	fmt.Printf("   glens analyze spec.json --ai-models ollama:%s\n", modelName)
+	return nil
 }

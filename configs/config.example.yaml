@@ -28,6 +28,61 @@ ai_models:
     max_tokens: 4000
     temperature: 0.7
 
+  # ── Local / self-hosted models (no cloud account or API key required) ──────
+  # Requires Ollama running locally: https://ollama.ai
+  # Pull a model first: glens models ollama pull mistral
+  ollama:
+    base_url: "http://localhost:11434" # Default Ollama server address
+    model: "codellama:7b-instruct"     # Default model; override per-invocation
+    timeout: "300s"
+    temperature: 0.1
+    max_tokens: 4000
+
+  # Mistral open-source models (local via Ollama)
+  # Pull: glens models ollama pull mistral
+  ollama_mistral:
+    base_url: "http://localhost:11434"
+    model: "mistral"
+    timeout: "300s"
+    temperature: 0.1
+    max_tokens: 4000
+
+  # Mistral Nemo 12B — a more capable local model
+  # Pull: glens models ollama pull mistral-nemo
+  ollama_mistral_nemo:
+    base_url: "http://localhost:11434"
+    model: "mistral-nemo"
+    timeout: "300s"
+    temperature: 0.1
+    max_tokens: 4000
+
+  # Meta Llama 3 (local via Ollama)
+  # Pull: glens models ollama pull llama3
+  ollama_llama3:
+    base_url: "http://localhost:11434"
+    model: "llama3"
+    timeout: "300s"
+    temperature: 0.1
+    max_tokens: 4000
+
+  # Microsoft Phi-4 — compact but capable (local via Ollama)
+  # Pull: glens models ollama pull phi4
+  ollama_phi4:
+    base_url: "http://localhost:11434"
+    model: "phi4"
+    timeout: "300s"
+    temperature: 0.1
+    max_tokens: 4000
+
+  # Google Gemma 2 — open-weights model (local via Ollama)
+  # Pull: glens models ollama pull gemma2
+  ollama_gemma2:
+    base_url: "http://localhost:11434"
+    model: "gemma2"
+    timeout: "300s"
+    temperature: 0.1
+    max_tokens: 4000
+
 # GitHub Configuration
 github:
   token: "${GITHUB_TOKEN}" # GitHub personal access token

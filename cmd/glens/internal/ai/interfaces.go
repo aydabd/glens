@@ -185,6 +185,32 @@ func createClient(modelName string) (Client, error) {
 	case "ollama_llama4", "llama4":
 		return NewOllamaClient("ollama_llama4")
 
+	// --- Local open-source models via Ollama (no cloud/API-key dependency) ---
+	// Mistral (local)
+	case "mistral-local", "mistral7b":
+		return newOllamaLocal("mistral")
+	case "mistral-nemo-local":
+		return newOllamaLocal("mistral-nemo")
+	case "mistral-small-local":
+		return newOllamaLocal("mistral-small")
+	// Meta Llama (local)
+	case "llama3-local", "llama3":
+		return newOllamaLocal("llama3")
+	case "llama3.1-local", "llama3.1":
+		return newOllamaLocal("llama3.1")
+	case "llama3.2-local", "llama3.2":
+		return newOllamaLocal("llama3.2")
+	// Microsoft Phi (local)
+	case "phi3-local", "phi3":
+		return newOllamaLocal("phi3")
+	case "phi4-local", "phi4":
+		return newOllamaLocal("phi4")
+	// Google Gemma (local, open-weights)
+	case "gemma2-local", "gemma2":
+		return newOllamaLocal("gemma2")
+	case "gemma3-local", "gemma3":
+		return newOllamaLocal("gemma3")
+
 	default:
 		// Check if it's a custom Ollama model (format: ollama:model-name)
 		if len(modelName) > 7 && modelName[:7] == "ollama:" {
@@ -201,4 +227,15 @@ func createClient(modelName string) (Client, error) {
 		}
 		return nil, ErrUnsupportedModel{Model: modelName}
 	}
+}
+
+// newOllamaLocal creates an OllamaClient using default server config but with
+// a specific model name, enabling local open-source model usage without any
+// cloud or API-key dependency.
+func newOllamaLocal(ollamaModelName string) (Client, error) {
+	base, err := NewOllamaClient("")
+	if err != nil {
+		return nil, err
+	}
+	return &OllamaClientWithModel{client: base, model: ollamaModelName}, nil
 }
