@@ -342,7 +342,7 @@ func runOllamaPull(_ *cobra.Command, args []string) error {
 	if err := ollamaClient.PullModel(ctx, modelName, os.Stdout); err != nil {
 		fmt.Printf("\n❌ Failed to pull model: %v\n", err)
 		fmt.Println("\n💡 Make sure Ollama is running: ollama serve")
-		return nil
+		return fmt.Errorf("failed to pull model %q: %w", modelName, err)
 	}
 
 	fmt.Printf("\n✅ Model %q pulled successfully\n", modelName)
