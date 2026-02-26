@@ -57,7 +57,7 @@ func compileBinary() {
 		return
 	}
 	bin := filepath.Join(dir, "glens")
-	cmd := exec.Command("go", "build", "-o", bin, ".")
+	cmd := exec.Command("go", "build", "-o", bin, ".") //nolint:gosec // output path is a temp dir we created; source is always "." (fixed string)
 	cmd.Dir = moduleRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
 		binaryErr = fmt.Errorf("build failed: %w\n%s", err, out)
