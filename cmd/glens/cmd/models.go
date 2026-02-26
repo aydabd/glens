@@ -53,12 +53,12 @@ var modelsOllamaPullCmd = &cobra.Command{
 No cloud account or API key is required.
 
 Examples:
-  glens models pull mistral          # Mistral 7B
-  glens models pull mistral-nemo     # Mistral Nemo 12B
-  glens models pull llama3           # Meta Llama 3
-  glens models pull phi4             # Microsoft Phi-4
-  glens models pull gemma2           # Google Gemma 2
-  glens models pull codellama:7b-instruct`,
+  glens models ollama pull mistral          # Mistral 7B
+  glens models ollama pull mistral-nemo     # Mistral Nemo 12B
+  glens models ollama pull llama3           # Meta Llama 3
+  glens models ollama pull phi4             # Microsoft Phi-4
+  glens models ollama pull gemma2           # Google Gemma 2
+  glens models ollama pull codellama:7b-instruct`,
 	Args: cobra.ExactArgs(1),
 	RunE: runOllamaPull,
 }
