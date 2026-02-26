@@ -309,6 +309,10 @@ func (c *OllamaClient) PullModel(ctx context.Context, modelName string, progress
 	for scanner.Scan() {
 		var line OllamaPullResponse
 		if err := json.Unmarshal(scanner.Bytes(), &line); err != nil {
+			log.Debug().
+				Err(err).
+				Bytes("line", scanner.Bytes()).
+				Msg("failed to unmarshal ollama pull response line")
 			continue
 		}
 		if line.Status != "" {
