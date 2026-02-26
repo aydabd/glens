@@ -1,86 +1,100 @@
 # Phase 2 — Frontend Tech Stack
 
-> Modern, accessible frontend deployed as a Cloud Function (SSR).
+> Clean, performant, WCAG-accessible frontend on Cloud Functions.
 
 ## Requirements Covered
 
-FE-01 (spec upload), FE-02 (model select), FE-03 (live progress),
-FE-04 (results dashboard), FE-05 (GitHub issues), FE-06 (filter),
-FE-07 (download reports), FE-08 (WCAG 2.2 AA), FE-09 (responsive).
+FE-01 – FE-12, DB-02 (historical charts).
 
-## Why SvelteKit
+## Framework Evaluation (Feb 2026)
 
-| Framework | Bundle | SSR | A11y built-in | Complexity |
-|-----------|--------|-----|---------------|------------|
-| **SvelteKit** | ~15 KB | ✅ | ✅ compiler warns | Low ✅ |
-| Next.js | ~90 KB | ✅ | ⚠️ plugin | Medium |
-| Astro | ~0 KB | ✅ | ⚠️ plugin | Low |
+| Framework | Bundle | SSR/SSG | Cloud Fn fit | A11y | Perf |
+|-----------|--------|---------|-------------|------|------|
+| **SvelteKit 2** | ~15 KB | ✅ native | ✅ adapter-node | ✅ compiler | ⭐⭐⭐ |
+| Flutter Web | ~2 MB | ❌ canvas | ❌ no SSR | ⚠️ manual | ⭐ |
+| Next.js 15 | ~90 KB | ✅ | ✅ adapter | ⚠️ plugin | ⭐⭐ |
+| Astro 5 | ~0 KB | ✅ islands | ✅ node | ⚠️ plugin | ⭐⭐⭐ |
+
+### Why Not Flutter Web
+
+- **Bundle size** — ~2 MB Dart-to-JS baseline vs ~15 KB SvelteKit.
+- **No SSR** — Flutter renders to `<canvas>`, invisible to crawlers.
+- **Cloud Functions** — no adapter; cold starts are heavy (~3 s).
+- **A11y** — canvas breaks screen readers; WCAG 2.2 AA impossible.
+- **SEO** — no semantic HTML; crawlers see an empty `<body>`.
+
+Flutter excels for native mobile (iOS/Android) but is a poor fit for
+a serverless web SaaS requiring accessibility and fast cold starts.
+
+### Recommendation: SvelteKit 2
 
 SvelteKit wins: smallest JS, compiler a11y warnings, progressive
-enhancement (works without JS), `adapter-node` for Cloud Functions.
+enhancement, `adapter-node` for Cloud Functions, SSE support.
 
 ## WCAG 2.2 AA Compliance
 
-- **Perceivable** — semantic HTML, compiler a11y warnings
+- **Perceivable** — semantic HTML, compiler a11y lints
 - **Operable** — keyboard nav, focus management, skip-links
 - **Understandable** — clear errors, form validation
-- **Robust** — works without JS; axe-core + Lighthouse CI in pipeline
+- **Robust** — works without JS; axe-core + Lighthouse in CI
 
 ## Project Structure
 
 ```
 frontend/
 ├── src/routes/
-│   ├── +page.svelte              # Home — spec upload (FE-01)
-│   ├── +layout.svelte            # Shell: nav, skip-link, footer
-│   ├── analyze/+page.svelte      # Progress + results (FE-03, FE-04)
-│   ├── models/+page.svelte       # Model selector (FE-02)
-│   └── reports/[id]/+page.svelte # Report view + download (FE-07)
+│   ├── +page.svelte              # Spec upload (FE-01)
+│   ├── +layout.svelte            # Shell: nav, skip-link
+│   ├── analyze/+page.svelte      # Progress + results (FE-03/04)
+│   ├── analyze/approve/+page.svelte # Destructive-test dialog (FE-11)
+│   ├── settings/auth/+page.svelte  # Auth config (FE-12)
+│   └── reports/[id]/+page.svelte # Reports + charts (DB-02)
 ├── src/lib/
-│   ├── api.ts          # Typed client (auto-gen from BE OpenAPI spec)
-│   └── sse.ts          # EventSource helper (FE-03)
-├── svelte.config.js    # adapter-node for Cloud Functions
-├── package.json
-└── Dockerfile
+│   ├── api.ts        # Typed client (auto-gen from OpenAPI)
+│   ├── sse.ts        # EventSource helper
+│   └── charts.ts     # Chart.js wrapper for result history
+├── svelte.config.js  # adapter-node for Cloud Functions
+└── package.json
 ```
 
-## UI Components
+## Result Visualisation (DB-02)
 
-Use **shadcn-svelte** — accessible, unstyled primitives with ARIA
-support, keyboard nav, and CSS-variable theming (light/dark).
+Use **Chart.js 4** (tree-shakeable, ~10 KB for bar/line charts):
 
-## API Client
+- Pass/fail trend over time (line chart)
+- Endpoint coverage by category (stacked bar)
+- AI model accuracy comparison (radar chart)
 
-Auto-generated from backend OpenAPI spec for type safety:
+Data fetched from `GET /api/v1/results?workspace=X&range=30d`.
 
-```bash
-npx openapi-typescript cmd/api/openapi.yaml \
-  -o frontend/src/lib/api-types.ts
-```
+## Auth Config UI (FE-12, SE-03, SE-04)
 
-## Deployment
+Users configure target-API credentials via a form that stores only
+**Secret Manager references**, never raw secrets:
 
-SvelteKit + `adapter-node` → Node.js server on Cloud Functions:
+1. User enters credential in frontend
+2. Frontend sends to `POST /api/v1/secrets` (backend-only)
+3. Backend stores in Secret Manager, returns a `ref` path
+4. Frontend stores only the `ref`; raw value is never persisted
 
-```bash
-npm run build
-gcloud functions deploy glens-frontend \
-  --gen2 --runtime=nodejs20 --source=build/ \
-  --entry-point=handler --region=us-central1
-```
+## Destructive-Test Approval (FE-11)
+
+Before running, the analyze-preview response lists endpoint risks.
+The UI shows a modal grouping endpoints by risk level (🟢🟡🔴).
+User can batch-approve or deselect individual endpoints.
 
 ## Steps
 
 1. `npm create svelte@latest frontend` (skeleton, TypeScript)
-2. Install shadcn-svelte + configure adapter-node
+2. Install shadcn-svelte 1.x + Chart.js 4
 3. Generate API types from backend OpenAPI spec
-4. Build pages: home (upload), analyze (SSE), reports (download)
+4. Build pages: upload, analyze, approve, results, auth config
 5. Add axe-core tests + Lighthouse CI config
 
 ## Success Criteria
 
-- [ ] Lighthouse a11y score ≥ 95
-- [ ] All pages keyboard-navigable
+- [ ] Lighthouse a11y ≥ 95; all pages keyboard-navigable
 - [ ] SSE progress renders in real-time
-- [ ] Works without JavaScript (progressive enhancement)
-- [ ] Bundle < 30 KB gzipped
+- [ ] Historical charts display test trends (DB-02)
+- [ ] Auth config stores refs only — no secret leaks (SE-04)
+- [ ] Bundle < 30 KB gzipped (excl. Chart.js lazy chunk)
