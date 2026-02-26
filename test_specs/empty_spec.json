@@ -1,0 +1,10 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Empty API",
+    "version": "1.0.0",
+    "description": "Valid OpenAPI spec with zero paths for BB-05 edge case test"
+  },
+  "servers": [{ "url": "https://api.example.com/v1" }],
+  "paths": {}
+}

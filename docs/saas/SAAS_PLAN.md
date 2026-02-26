@@ -18,7 +18,7 @@ automated testing at every level (unit, integration, e2e).
 5. **Event-driven** — async side effects via Pub/Sub + Cloud Functions.
 6. **Domain isolation** — each domain in its own package; no conflicts.
 7. **Security-first** — secrets never reach the frontend.
-8. **Independent phases** — all 12 phases built in parallel.
+8. **Independent phases** — all 13 phases built in parallel.
 
 ## Requirement Map
 
@@ -62,6 +62,7 @@ automated testing at every level (unit, integration, e2e).
 | AC-02 | Swagger UI published via Cloud Function | 12 |
 | AC-03 | Auto-generated client SDKs | 12 |
 | AC-04 | Contract-drift tests in CI | 12 |
+| BB-01 – BB-20 | 20 blackbox/E2E test examples for TDD | 13 |
 
 ## Phases (all independent, parallel)
 
@@ -79,6 +80,7 @@ automated testing at every level (unit, integration, e2e).
 | 10 | [PHASE10_TESTING_STRATEGY.md](PHASE10_TESTING_STRATEGY.md) | Testing strategy |
 | 11 | [PHASE11_EVENT_ARCHITECTURE.md](PHASE11_EVENT_ARCHITECTURE.md) | Events / Pub/Sub |
 | 12 | [PHASE12_API_CONTRACTS.md](PHASE12_API_CONTRACTS.md) | API contracts |
+| 13 | [PHASE13_BLACKBOX_E2E_EXAMPLES.md](PHASE13_BLACKBOX_E2E_EXAMPLES.md) | 20 E2E tests |
 
 ## Tech Stack (latest stable, Feb 2026)
 

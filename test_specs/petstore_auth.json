@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Petstore (Auth)",
+    "version": "1.0.0",
+    "description": "API with security schemes for BB-17 E2E test"
+  },
+  "servers": [{ "url": "https://api.example.com/v1" }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "paths": {
+    "/pets": {
+      "get": {
+        "summary": "List pets (API key)",
+        "operationId": "listPets",
+        "security": [{ "apiKeyAuth": [] }],
+        "responses": {
+          "200": { "description": "A list of pets" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/pets/{petId}": {
+      "get": {
+        "summary": "Get pet (Bearer token)",
+        "operationId": "getPetById",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "A single pet" },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Pet not found" }
+        }
+      }
+    }
+  }
+}
