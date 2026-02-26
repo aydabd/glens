@@ -64,6 +64,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full contributor guide.
 - [docs/QUICKSTART.md](docs/QUICKSTART.md) — Getting started
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — Contributor guide
 - [docs/diagrams/architecture.md](docs/diagrams/architecture.md) — Architecture diagrams
+- [docs/saas/SAAS_PLAN.md](docs/saas/SAAS_PLAN.md) — SaaS transformation plan (GCP)
 
 ## License
 
