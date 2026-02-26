@@ -60,7 +60,7 @@ jobs:
     steps:
       - run: cd frontend && npm ci && npm run build
       - uses: google-github-actions/deploy-cloud-functions@v3
-        with: { name: glens-frontend, runtime: nodejs20 }
+        with: { name: glens-frontend, runtime: nodejs20 }  # verify GCP Gen2 support
 ```
 
 ### Infrastructure (`infra.yml`) — triggers on `infra/**`

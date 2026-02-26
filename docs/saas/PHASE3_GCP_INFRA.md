@@ -57,7 +57,7 @@ resource "google_cloud_run_v2_service" "api" {
 resource "google_cloudfunctions2_function" "frontend" {
   name     = "glens-frontend"
   location = var.region
-  build_config { runtime = "nodejs20"; entry_point = "handler" }
+  build_config { runtime = var.node_runtime; entry_point = "handler" }
   service_config {
     min_instance_count = 0; max_instance_count = 3
     environment_variables = { API_URL = google_cloud_run_v2_service.api.uri }
