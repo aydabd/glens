@@ -210,6 +210,9 @@ func runModelsStatus(_ *cobra.Command, _ []string) error {
 }
 
 func runOllamaList(_ *cobra.Command, _ []string) error {
+	// digestDisplayLength is the number of hex characters shown from a model
+	// digest before truncating with "..." for readability.
+	const digestDisplayLength = 12
 	ollamaClient, err := ai.NewOllamaClient("")
 	if err != nil {
 		return fmt.Errorf("failed to create Ollama client: %w", err)
@@ -245,7 +248,10 @@ func runOllamaList(_ *cobra.Command, _ []string) error {
 	for _, model := range models {
 		size := formatSize(model.Size)
 		modified := model.ModifiedAt.Format("2006-01-02 15:04")
-		digest := model.Digest[:12] + "..."
+		digest := model.Digest
+		if len(digest) > digestDisplayLength {
+			digest = digest[:digestDisplayLength] + "..."
+		}
 		if _, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", model.Name, size, modified, digest); err != nil {
 			return fmt.Errorf("failed to write model data: %w", err)
 		}
