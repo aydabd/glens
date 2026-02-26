@@ -314,13 +314,13 @@ func (c *OllamaClient) PullModel(ctx context.Context, modelName string, progress
 		if line.Status != "" {
 			if line.Total > 0 {
 				pct := float64(line.Completed) / float64(line.Total) * 100
-				fmt.Fprintf(progress, "\r%s: %.1f%%", line.Status, pct)
+				_, _ = fmt.Fprintf(progress, "\r%s: %.1f%%", line.Status, pct)
 			} else {
-				fmt.Fprintf(progress, "\r%s", line.Status)
+				_, _ = fmt.Fprintf(progress, "\r%s", line.Status)
 			}
 		}
 	}
-	fmt.Fprintln(progress)
+	_, _ = fmt.Fprintln(progress)
 
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error reading pull stream: %w", err)
