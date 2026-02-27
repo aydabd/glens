@@ -29,7 +29,7 @@ services:
   firestore:
     image: google/cloud-sdk:latest
     command: gcloud beta emulators firestore start --host-port=0.0.0.0:8085
-    ports: ["8085:8085"]
+    ports: ["8085:8085"]  # 0.0.0.0 required inside container
   pubsub:
     image: google/cloud-sdk:latest
     command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8086

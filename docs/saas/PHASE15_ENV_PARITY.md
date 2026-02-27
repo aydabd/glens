@@ -4,8 +4,8 @@
 
 ## Requirements Covered
 
-EP-01 (dev account), EP-02 (prod account), EP-03 (parity guarantee),
-EP-04 (debug in dev only), EP-05 (no env-specific code paths).
+EN-01 (dev account), EN-02 (prod account), EN-03 (parity guarantee),
+EN-04 (debug in dev only), EN-05 (no env-specific code paths).
 
 ## Principle
 
@@ -64,7 +64,7 @@ deploy:
     - run: cd infra && terraform apply -var-file=environments/${{ matrix.env }}.tfvars -auto-approve
 ```
 
-## Parity Validation (EP-03)
+## Parity Validation (EN-03)
 
 CI diffs `terraform plan` between dev and prod; only allowed vars
 (project, log_level, instances, alert) may differ. Any other diff

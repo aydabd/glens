@@ -30,7 +30,7 @@
 | AC-01 – AC-04 | OpenAPI contract-first, Swagger UI, SDK gen, drift | 12 |
 | BB-01 – BB-20 | 20 blackbox/E2E test examples for TDD | 13 |
 | EM-01 – EM-04 | Local emulators, CI emulators, Terraform validate | 14 |
-| EP-01 – EP-05 | Dev/prod parity, no env-specific code paths | 15 |
+| EN-01 – EN-05 | Dev/prod parity, no env-specific code paths | 15 |
 | RV-01 – RV-06 | Semver, pre-release, promote, regression gates | 16 |
 | IP-01 – IP-05 | Issue provider interface, GitHub/GitLab/Jira | 17 |
 

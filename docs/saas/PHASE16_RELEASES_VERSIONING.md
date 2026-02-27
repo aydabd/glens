@@ -46,7 +46,7 @@ jobs:
   release:
     steps:
       - run: |
-          [[ "${{ github.ref_name }}" == *-rc* ]] \
+          [[ "${{ github.ref_name }}" == *-rc.* ]] \
             && echo "ENV=dev" >> $GITHUB_ENV \
             || echo "ENV=prod" >> $GITHUB_ENV
       - uses: google-github-actions/auth@v2
