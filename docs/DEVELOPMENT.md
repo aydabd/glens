@@ -4,7 +4,7 @@
 
 ## Workspace structure
 
-```
+```text
 go.work                          # Go workspace root (no go.mod here)
 ├── pkg/logging/                 # module glens/pkg/logging
 │   ├── logging.go
@@ -78,7 +78,9 @@ make all              # fmt-check + vet + lint + test  (same as CI)
 
 ### Issue creation (`cmd/analyze.go`)
 
-Issues are created **only** when tests compile and produce assertion failures. Connection errors, compilation errors, and passing tests never produce issues. `isRealTestFailure()` implements this distinction.
+Issues are created **only** when tests compile and produce assertion failures.
+Connection errors, compilation errors, and passing tests never produce issues.
+`isRealTestFailure()` implements this distinction.
 
 ### AI layer (`internal/ai/`)
 

@@ -4,7 +4,9 @@ Generic zerolog setup wrapper. Configures global log level, format (JSON or cons
 
 Module: `glens/pkg/logging`
 
-This library has **no imports from any `internal/` package** and no dependencies on glens internals — it can be used in any Go project or moved to a separate repository at any time.
+This library has **no imports from any `internal/` package** and no dependencies
+on glens internals — it can be used in any Go project or moved to a separate
+repository at any time.
 
 ## Install
 
@@ -63,7 +65,7 @@ git push origin pkg/logging/v0.1.0
 
 ## Module structure
 
-```
+```text
 pkg/logging/
 ├── logging.go       # Setup(), Level, Format types
 ├── logging_test.go

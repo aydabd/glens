@@ -44,7 +44,7 @@ Run from this directory (`cmd/tools/demo/`):
 
 ## Module structure
 
-```
+```text
 cmd/tools/demo/
 ├── main.go                       # Entry point (flag parsing, exit codes)
 ├── internal/
