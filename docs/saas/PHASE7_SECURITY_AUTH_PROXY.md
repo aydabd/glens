@@ -40,7 +40,9 @@ appear in Firestore, logs, spans, or API responses.
 
 ```go
 func resolveSecret(ctx context.Context, ref string) (string, error) {
-    client, _ := secretmanager.NewClient(ctx)
+    client, err := secretmanager.NewClient(ctx)
+    if err != nil { return "", fmt.Errorf("resolve: new client: %w", err) }
+    defer client.Close()
     result, err := client.AccessSecretVersion(ctx,
         &smpb.AccessSecretVersionRequest{Name: ref})
     if err != nil { return "", fmt.Errorf("resolve: %w", err) }
@@ -58,7 +60,9 @@ For Kong, Apigee, or custom gateways:
     "X-Tenant": "ref:projects/p/secrets/tenant/versions/1" } }
 ```
 
-Values prefixed `ref:` resolved server-side; plain strings passed.
+Values prefixed `ref:` are resolved server-side. Plain-string values
+are passed through unchanged and MUST NOT contain secrets; use `ref:`
+for any sensitive header values.
 
 ## Frontend Auth Config (FE-12)
 

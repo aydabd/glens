@@ -49,7 +49,7 @@ workspaces/{wsId}/runs/{runId}
   └── summary { total, passed, failed, duration }
 ```
 
-Index: `(workspace_id, created_at DESC)` for dashboard queries.
+Index: `(created_at DESC)` on `workspaces/{wsId}/runs` for per-workspace queries.
 
 ## BigQuery Export (DB-03)
 

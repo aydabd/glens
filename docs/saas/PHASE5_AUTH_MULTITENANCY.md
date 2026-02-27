@@ -46,7 +46,7 @@ match /databases/{database}/documents {
 ```go
 func AuthMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        token := extractBearerToken(r)
+        token := extractToken(r) // reads httpOnly cookie or Authorization header
         if token == "" {
             http.Error(w, "unauthorized", http.StatusUnauthorized)
             return
@@ -86,13 +86,11 @@ Plan enforcement is in backend middleware, not frontend.
 
 ## Steps
 
-1. Enable Firebase Auth + configure GitHub/Google OAuth
-2. Add Firebase Admin SDK to Go backend
-3. Implement auth middleware
-4. Design Firestore model + security rules
-5. Build login/signup pages in SvelteKit
-6. Implement API key management
-7. Add usage tracking and plan limits
+1. Enable Firebase Auth + configure GitHub/Google OAuth providers
+2. Add Firebase Admin SDK; implement auth middleware
+3. Design Firestore model + security rules
+4. Build login/signup pages in SvelteKit
+5. Implement API key management; add usage tracking and plan limits
 
 ## Success Criteria
 

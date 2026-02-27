@@ -74,6 +74,8 @@ func categorise(ep *parser.Endpoint) EndpointCategory {
         return EndpointCategory{Category: "mutate", Risk: "medium"}
     case "DELETE":
         return EndpointCategory{Category: "destroy", Risk: "high"}
+    default:
+        return EndpointCategory{Category: "write", Risk: "medium"}
     }
 }
 ```
@@ -88,13 +90,11 @@ func categorise(ep *parser.Endpoint) EndpointCategory {
 ## Steps
 
 1. Add `internal/safety/categoriser.go` to `cmd/api`
-2. Implement `POST /api/v1/analyze/preview` handler
-3. Update analyze to accept `approved_endpoints` list
-4. Add cleanup hook generator; build approval modal (FE-11)
+2. Implement `POST /api/v1/analyze/preview`; update analyze handler
+3. Add cleanup hook generator; build approval modal (FE-11)
 
 ## Success Criteria
 
 - [ ] All endpoints categorised by method + heuristics
 - [ ] User sees warnings before destructive tests run
-- [ ] Batch approve/deselect; skipped endpoints not tested
-- [ ] Cleanup removes test-created resources (best-effort)
+- [ ] Batch approve/deselect; cleanup removes test-created resources
