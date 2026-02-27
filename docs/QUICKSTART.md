@@ -66,7 +66,6 @@ Issues are **not** created when:
 - Test compilation fails
 - All tests pass
 
-
 ## Makefile Commands (run from `cmd/glens/`)
 
 ```bash
