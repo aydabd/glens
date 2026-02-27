@@ -20,7 +20,7 @@ secrets), SE-04 (frontend never sees raw creds), FE-12 (auth UI).
 
 ## Security Flow
 
-```
+```text
 Frontend                        Backend (Cloud Run)
   │ POST /api/v1/secrets          │
   │ {"name":"tok","value":"sk…"} ►│► Secret Manager (store)

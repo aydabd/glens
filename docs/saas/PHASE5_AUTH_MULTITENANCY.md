@@ -8,7 +8,7 @@ BE-09 (auth & API keys), BE-10 (multi-tenant isolation), FE-10 (login).
 
 ## Auth Flow
 
-```
+```text
 User ── Login ──► Firebase Auth ──► JWT (ID token)
   │                                       │
   └──► Frontend (httpOnly cookie) ──► Backend (verify via Admin SDK)
@@ -18,7 +18,7 @@ User ── Login ──► Firebase Auth ──► JWT (ID token)
 
 ## Data Model (Firestore)
 
-```
+```text
 users/{userId}         — email, plan, settings
 workspaces/{wsId}      — owner_id, members[]
   └── runs/{runId}     — spec_url, models, status, results

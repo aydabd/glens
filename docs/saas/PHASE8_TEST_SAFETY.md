@@ -39,7 +39,7 @@ OpenAPI `x-safe: true` extension overrides default.
 
 ## User Approval Flow (TS-02, TS-03)
 
-```
+```text
 "Analyze" clicked → POST /api/v1/analyze/preview
   → Frontend: approval modal (FE-11)
     🟢 Read-only — auto-approved

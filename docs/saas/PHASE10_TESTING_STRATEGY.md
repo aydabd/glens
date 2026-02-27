@@ -9,7 +9,7 @@ QA-04 (architecture acceptance in CI), QA-05 (definition-of-done).
 
 ## Test Pyramid
 
-```
+```text
        ┌─────────┐  E2E: 5-10 scenario tests (full flow)
       ┌┴─────────┴┐ Integration: per-boundary (API→DB, API→SecretMgr)
      ┌┴────────────┴┐ Unit: per-package (handler, safety, authproxy)

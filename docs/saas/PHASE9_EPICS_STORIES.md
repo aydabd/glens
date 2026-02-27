@@ -63,7 +63,7 @@ domain. Tasks are atomic units assignable to one developer/agent.
 Each domain owns its own `internal/` package. No cross-domain imports.
 Agents work on separate packages; integration via interfaces:
 
-```
+```text
 cmd/api/internal/
 ├── handler/    # Epic 1    ├── auth/       # Epic 5
 ├── telemetry/  # Epic 6    ├── authproxy/  # Epic 7

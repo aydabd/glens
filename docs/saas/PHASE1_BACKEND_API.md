@@ -11,7 +11,7 @@ BE-01 – BE-08, SE-01 – SE-02 (auth proxy), TS-01 (categorisation).
 New module `cmd/api` reuses `internal/` packages. Stdlib `net/http`,
 SSE for streaming, JSON-RPC for MCP tool calls.
 
-```
+```text
 cmd/api/
 ├── main.go
 ├── internal/handler/       # analyze, models, health, mcp

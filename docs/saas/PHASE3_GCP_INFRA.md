@@ -24,7 +24,7 @@ idle cost, fits our document model. BigQuery for batch analytics.
 
 ## Terraform Layout
 
-```
+```text
 infra/
 ├── main.tf / variables.tf / outputs.tf
 ├── modules/
@@ -40,7 +40,7 @@ infra/
 
 ## Test Results Schema (DB-01, Firestore)
 
-```
+```text
 workspaces/{wsId}/runs/{runId}
   ├── spec_url, models[], status, created_at
   ├── endpoints[]
@@ -72,7 +72,7 @@ resource "google_cloud_run_v2_service" "api" {
 
 ## Network Topology
 
-```
+```text
 User → CDN/LB ─┬─ Cloud Functions (Frontend)
                 └─ Cloud Storage (Static)
                      │

@@ -40,7 +40,7 @@ enhancement, `adapter-node` for Cloud Functions, SSE support.
 
 ## Project Structure
 
-```
+```text
 frontend/
 ├── src/routes/
 │   ├── +page.svelte              # Spec upload (FE-01)

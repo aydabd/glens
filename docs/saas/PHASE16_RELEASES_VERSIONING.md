@@ -9,7 +9,7 @@ RV-04 (regression gate), RV-05 (smoke tests), RV-06 (deployment e2e).
 
 ## Version Format
 
-```
+```text
 v1.2.3          — production release
 v1.2.3-rc.1     — release candidate (deployed to dev)
 v1.2.3-alpha.1  — early preview (CI only, no deploy)
@@ -19,7 +19,7 @@ Tags trigger builds. No manual version bumps — use `release-please`.
 
 ## Release Flow
 
-```
+```text
 Feature PR → main (CI: unit + integration)
     │
     ├── release-please creates Release PR (bumps version)

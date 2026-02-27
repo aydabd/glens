@@ -38,7 +38,7 @@ Payload varies by type. Schemas published in `openapi.yaml`.
 
 ## Architecture
 
-```
+```text
 API (Cloud Run) ──publish──► Pub/Sub Topic
                                 │
   ┌─────────────────────────────┼──────────────────┐

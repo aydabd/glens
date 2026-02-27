@@ -15,7 +15,7 @@ OB-01 (OTel SDK), OB-02 (Cloud Trace + Monitoring), OB-03 (logging).
 
 ## Architecture
 
-```
+```text
 Backend (Go) → OTel SDK → TracerProvider + MeterProvider
   ├── Cloud Trace   (free 2.5M spans/mo)
   ├── Cloud Monitoring (free custom metrics)

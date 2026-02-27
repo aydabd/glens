@@ -12,7 +12,7 @@ AC-03 (auto-generated SDKs), AC-04 (contract tests in CI).
 Every endpoint defined in `openapi.yaml` **before** code. Code gen
 ensures handlers match the spec; compiler fails on drift.
 
-```
+```text
 cmd/api/openapi.yaml      # source of truth
 ├── paths/                 # endpoint definitions
 ├── components/schemas/    # shared models + event payloads
@@ -21,7 +21,7 @@ cmd/api/openapi.yaml      # source of truth
 
 ## Code Generation
 
-```
+```text
 openapi.yaml
   ├──► oapi-codegen (Go)     → server interfaces + types
   ├──► openapi-typescript     → frontend API client types

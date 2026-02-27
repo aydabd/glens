@@ -79,7 +79,7 @@ Existing `sample_api.json` used for BB-06–10, BB-12–16, BB-18–20.
 ## TDD Workflow Per Test
 
 1. Create fixture → 2. Write failing test → 3. Implement code →
-4. Test passes → 5. Update docs → 6. CI gate green
+2. Test passes → 5. Update docs → 6. CI gate green
 
 ## Definition of Done (per BB-XX)
 
