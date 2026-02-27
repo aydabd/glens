@@ -28,15 +28,24 @@ Frontend sends no telemetry; backend correlates via `traceparent`.
 
 ```go
 import (
+  "fmt"
+
   gcptrace "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
   gcpmetric "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
 )
 
 func initOTel(ctx context.Context, project string) (func(), error) {
-  te, _ := gcptrace.New(gcptrace.WithProjectID(project))
+  te, err := gcptrace.New(gcptrace.WithProjectID(project))
+  if err != nil {
+    return nil, fmt.Errorf("create trace exporter: %w", err)
+  }
   tp := trace.NewTracerProvider(trace.WithBatcher(te))
   otel.SetTracerProvider(tp)
-  me, _ := gcpmetric.New(gcpmetric.WithProjectID(project))
+
+  me, err := gcpmetric.New(gcpmetric.WithProjectID(project))
+  if err != nil {
+    return nil, fmt.Errorf("create metric exporter: %w", err)
+  }
   mp := metric.NewMeterProvider(metric.WithReader(
     metric.NewPeriodicReader(me)))
   otel.SetMeterProvider(mp)
