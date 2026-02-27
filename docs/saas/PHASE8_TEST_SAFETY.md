@@ -68,7 +68,7 @@ func categorise(ep *parser.Endpoint) EndpointCategory {
     case "GET", "HEAD", "OPTIONS":
         return EndpointCategory{Category: "read", Risk: "safe"}
     case "POST":
-        if isSafePost(ep) { return EndpointCategory{Category: "read"} }
+        if isSafePost(ep) { return EndpointCategory{Category: "read", Risk: "safe"} }
         return EndpointCategory{Category: "write", Risk: "medium"}
     case "PUT", "PATCH":
         return EndpointCategory{Category: "mutate", Risk: "medium"}
