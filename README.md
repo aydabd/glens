@@ -2,11 +2,13 @@
 
 > OpenAPI Integration Test Generator with AI — Go workspace monorepo
 
-Analyzes OpenAPI specs, generates integration tests using AI, and creates GitHub issues **only when tests fail**. All binaries are cross-platform and available as standalone downloads — no Go toolchain required.
+Analyzes OpenAPI specs, generates integration tests using AI, and creates GitHub
+issues **only when tests fail**. All binaries are cross-platform and available
+as standalone downloads — no Go toolchain required.
 
 ## Workspace layout
 
-```
+```text
 go.work
 ├── pkg/logging           # module glens/pkg/logging    — generic zerolog wrapper
 ├── cmd/glens             # module glens/tools/glens    — main CLI
@@ -27,7 +29,10 @@ Each module is independently buildable, testable, and releasable. Any module can
 
 ## Download binaries
 
-Pre-built binaries for `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, and `windows/amd64` are on the [releases page](https://github.com/aydabd/glens/releases). Download and run — no dependencies.
+Pre-built binaries for `linux/amd64`, `linux/arm64`, `darwin/amd64`,
+`darwin/arm64`, and `windows/amd64` are on the
+[releases page](https://github.com/aydabd/glens/releases).
+Download and run — no dependencies.
 
 ## Quick start (glens CLI)
 
@@ -64,6 +69,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full contributor guide.
 - [docs/QUICKSTART.md](docs/QUICKSTART.md) — Getting started
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — Contributor guide
 - [docs/diagrams/architecture.md](docs/diagrams/architecture.md) — Architecture diagrams
+- [docs/saas/SAAS_PLAN.md](docs/saas/SAAS_PLAN.md) — SaaS transformation plan (GCP)
 
 ## License
 

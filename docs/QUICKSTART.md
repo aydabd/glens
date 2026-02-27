@@ -56,10 +56,12 @@ ai_models:
 ## GitHub Issue Logic
 
 Issues are created **only** when:
+
 - Tests compile and run successfully
 - Tests fail with assertion errors (spec violations)
 
 Issues are **not** created when:
+
 - Connection to the server fails
 - Test compilation fails
 - All tests pass
@@ -77,7 +79,7 @@ make clean      # Remove build artifacts
 
 ## Flags
 
-```
+```text
 --ai-models strings    AI models to use (default: gpt4)
 --github-repo string   Target repository (owner/repo)
 --create-issues        Create issues on failures (default: true)
@@ -106,17 +108,18 @@ Two standalone utility binaries are also available:
 
 ## Troubleshooting
 
-**GitHub token missing**
+### GitHub token missing
 
 ```bash
 export GITHUB_TOKEN=$(gh auth token)
 ```
 
-**No tests generated**
+### No tests generated
+
 - Confirm the OpenAPI spec URL is reachable
 - Verify the AI model is accessible
 - Add `--debug` for detailed logs
 
-**Reports**
+### Reports
 
 Reports are written to `reports/report.md` (gitignored). Open with any Markdown viewer.

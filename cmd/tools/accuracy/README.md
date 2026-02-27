@@ -47,7 +47,7 @@ Run from this directory (`cmd/tools/accuracy/`):
 
 ## Module structure
 
-```
+```text
 cmd/tools/accuracy/
 ├── main.go                       # Entry point (flag parsing, exit codes)
 ├── internal/

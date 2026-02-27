@@ -100,12 +100,15 @@ openapi-generator validate -i test_specs/your_spec.json
 - Basic parameters
 - Standard response codes
 
-### Level 2: Intermediate (Future)
+### Level 2: Intermediate (Current — E2E fixtures)
 
-- Authentication (OAuth, API keys)
-- Complex request bodies
-- Multiple content types
-- Pagination
+- `petstore_readonly.json` — 2× GET, read-only (BB-01)
+- `petstore_crud.json` — GET/POST/PUT/DELETE (BB-02, BB-03, BB-11)
+- `empty_spec.json` — valid spec, 0 paths (BB-05)
+- `petstore_auth.json` — security schemes: Bearer + API key (BB-17)
+
+See [docs/saas/PHASE13_BLACKBOX_E2E_EXAMPLES.md](../docs/saas/PHASE13_BLACKBOX_E2E_EXAMPLES.md)
+for the full 20-test catalogue.
 
 ### Level 3: Advanced (Future)
 

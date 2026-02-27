@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Petstore (Read-Only)",
+    "version": "1.0.0",
+    "description": "Read-only API for BB-01 E2E test"
+  },
+  "servers": [{ "url": "https://api.example.com/v1" }],
+  "paths": {
+    "/pets": {
+      "get": {
+        "summary": "List all pets",
+        "operationId": "listPets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "maximum": 100 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "A list of pets" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/pets/{petId}": {
+      "get": {
+        "summary": "Get a pet by ID",
+        "operationId": "getPetById",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "A single pet" },
+          "404": { "description": "Pet not found" }
+        }
+      }
+    }
+  }
+}

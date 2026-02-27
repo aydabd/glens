@@ -99,10 +99,12 @@ ai_models:
 ## Issue creation logic
 
 Issues are created **only** when:
+
 - Tests compile and run successfully
 - Tests fail with assertion errors (spec violations)
 
 Issues are **not** created for:
+
 - Connection failures
 - Test compilation errors
 - Infrastructure problems
@@ -111,7 +113,7 @@ Key function: `isRealTestFailure()` in `cmd/analyze.go`.
 
 ## Module structure
 
-```
+```text
 cmd/glens/
 ├── main.go                 # Entry point
 ├── cmd/                    # CLI command definitions
