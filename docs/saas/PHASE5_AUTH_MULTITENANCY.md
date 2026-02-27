@@ -28,13 +28,15 @@ workspaces/{wsId}      — owner_id, members[]
 ## Security Rules (excerpt)
 
 ```javascript
-match /workspaces/{wsId} {
-  allow read: if request.auth.uid == resource.data.owner_id
-              || request.auth.uid in resource.data.members;
-  allow write: if request.auth.uid == resource.data.owner_id;
-  match /runs/{runId} {
-    allow read, write: if request.auth.uid ==
-      get(/databases/$(db)/documents/workspaces/$(wsId)).data.owner_id;
+match /databases/{database}/documents {
+  match /workspaces/{wsId} {
+    allow read: if request.auth.uid == resource.data.owner_id
+                || request.auth.uid in resource.data.members;
+    allow write: if request.auth.uid == resource.data.owner_id;
+    match /runs/{runId} {
+      allow read, write: if request.auth.uid ==
+        get(/databases/$(database)/documents/workspaces/$(wsId)).data.owner_id;
+    }
   }
 }
 ```
