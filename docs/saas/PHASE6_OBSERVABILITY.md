@@ -37,8 +37,19 @@ import (
 func initOTel(ctx context.Context, project string) (func(), error) {
   te, err := gcptrace.New(gcptrace.WithProjectID(project))
   if err != nil {
+  "fmt"
+  "log"
+
+  gcptrace "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+  gcpmetric "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
+)
+
+func initOTel(ctx context.Context, project string) (func(), error) {
+  te, err := gcptrace.New(gcptrace.WithProjectID(project))
+  if err != nil {
     return nil, fmt.Errorf("create trace exporter: %w", err)
   }
+
   tp := trace.NewTracerProvider(trace.WithBatcher(te))
   otel.SetTracerProvider(tp)
 
@@ -46,10 +57,20 @@ func initOTel(ctx context.Context, project string) (func(), error) {
   if err != nil {
     return nil, fmt.Errorf("create metric exporter: %w", err)
   }
+
   mp := metric.NewMeterProvider(metric.WithReader(
-    metric.NewPeriodicReader(me)))
+    metric.NewPeriodicReader(me),
+  ))
   otel.SetMeterProvider(mp)
-  return func() { tp.Shutdown(ctx); mp.Shutdown(ctx) }, nil
+
+  return func() {
+    if err := tp.Shutdown(ctx); err != nil {
+      log.Printf("failed to shutdown tracer provider: %v", err)
+    }
+    if err := mp.Shutdown(ctx); err != nil {
+      log.Printf("failed to shutdown meter provider: %v", err)
+    }
+  }, nil
 }
 ```
 
