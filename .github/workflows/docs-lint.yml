@@ -5,6 +5,7 @@ on:
     paths:
       - "**/*.md"
       - ".markdownlint.json"
+      - ".markdownlintignore"
   push:
     branches:
       - main
@@ -12,6 +13,7 @@ on:
     paths:
       - "**/*.md"
       - ".markdownlint.json"
+      - ".markdownlintignore"
 
 jobs:
   markdownlint:
