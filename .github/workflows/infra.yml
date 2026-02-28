@@ -1,0 +1,31 @@
+name: Infrastructure
+on:
+  push:
+    branches: [main]
+    paths: ['infra/**']
+  pull_request:
+    paths: ['infra/**']
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: cd infra && terraform init -backend=false && terraform validate
+  plan:
+    needs: validate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: echo "Terraform plan (requires GCP credentials)"
+  apply:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: echo "Terraform apply (requires GCP credentials)"
