@@ -4,3 +4,4 @@ use ./pkg/logging
 use ./cmd/glens
 use ./cmd/tools/demo
 use ./cmd/tools/accuracy
+use ./cmd/api
