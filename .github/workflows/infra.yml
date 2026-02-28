@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
+      - run: cd infra && terraform fmt -check -recursive
       - run: cd infra && terraform init -backend=false && terraform validate
   plan:
     needs: validate
