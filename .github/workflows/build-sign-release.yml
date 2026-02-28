@@ -38,12 +38,12 @@ on:
         required: true
         type: string
     secrets:
-      gpg-private-key:
+      GPG_PRIVATE_KEY:
         description: >
           ASCII-armoured GPG private key for signing checksums.
           When omitted, GPG signing is skipped gracefully.
         required: false
-      gpg-passphrase:
+      GPG_PASSPHRASE:
         description: >
           Passphrase for the GPG private key.
           When omitted, GPG signing is skipped gracefully.
@@ -114,8 +114,8 @@ jobs:
 
       - uses: ./.github/actions/sign-assets
         with:
-          gpg-private-key: ${{ secrets.gpg-private-key }}
-          gpg-passphrase: ${{ secrets.gpg-passphrase }}
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - uses: softprops/action-gh-release@v2
         with:

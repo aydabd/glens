@@ -35,12 +35,14 @@ runs:
         set -euo pipefail
         cd "${ASSETS_DIR}"
         sha256sum * > checksums.txt
-        if [ -n "${GPG_PRIVATE_KEY:-}" ]; then
+        if [ -n "${GPG_PRIVATE_KEY:-}" ] && [ -n "${GPG_PASSPHRASE:-}" ]; then
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
           gpg --batch --yes --pinentry-mode loopback \
             --passphrase "${GPG_PASSPHRASE}" \
             --detach-sign --armor checksums.txt
           echo "✅ GPG signature created: checksums.txt.asc"
+        elif [ -n "${GPG_PRIVATE_KEY:-}" ] && [ -z "${GPG_PASSPHRASE:-}" ]; then
+          echo "⚠️ GPG_PRIVATE_KEY set but GPG_PASSPHRASE empty — skipping GPG signing"
         else
           echo "⚠️ GPG_PRIVATE_KEY not set — skipping GPG signing"
         fi
