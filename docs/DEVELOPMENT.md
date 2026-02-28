@@ -135,27 +135,40 @@ Integration tests that need a real spec use `test_specs/sample_api.json` with no
 |----------|---------|--------------|
 | `pkg-logging.yml` | `pkg/logging/**` | `make all` + `go test` |
 | `glens.yml` | `cmd/glens/**` | `make all` + `go test` |
+| `api.yml` | `cmd/api/**` | `make all` + `go test` |
 | `tool-demo.yml` | `cmd/tools/demo/**` | `make all` + `go test` |
 | `tool-accuracy.yml` | `cmd/tools/accuracy/**` | `make all` + `go test` |
-| `release.yml` | `v*` tags | cross-platform builds for all modules |
+| `release-please.yml` | push to `main` | Release Please per-module versioning |
 
 Each workflow is fully independent — a change in one module only triggers that module's CI.
 
 ## Release
 
-Pushing a `v*` tag triggers `release.yml`, which builds all binaries for five platforms and publishes a GitHub release with `checksums.txt`.
+Releases are automated by [Release Please](https://github.com/googleapis/release-please).
+Merging to `main` triggers release PR creation. Merging a release PR creates a tag and
+GitHub Release. See [docs/RELEASE_PLAN.md](RELEASE_PLAN.md) for the full strategy.
 
-```bash
-git tag v1.2.3
-git push origin v1.2.3
-```
-
-Individual library tags use the module prefix:
+Individual module release workflows also support direct tag-based releases:
 
 ```bash
 git tag pkg/logging/v0.2.0
 git push origin pkg/logging/v0.2.0
 ```
+
+## Conventional commits
+
+All commits **must** follow [Conventional Commits](https://www.conventionalcommits.org/).
+This is enforced by the `conventional-pre-commit` hook (install with `pre-commit install --hook-type commit-msg`).
+
+```text
+<type>[optional scope]: <description>
+```
+
+Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+
+Use module path as scope: `feat(cmd/glens): add JSON output`.
+
+Breaking changes: add `!` after type (`feat!:`) or add `BREAKING CHANGE:` footer.
 
 ## Code review checklist
 

@@ -92,6 +92,16 @@ on:
           Token with contents:write permission. When omitted, the workflow uses
           the calling workflow's GITHUB_TOKEN (pass secrets: inherit).
         required: false
+      gpg-private-key:
+        description: >
+          ASCII-armoured GPG private key for signing checksums.
+          When omitted, GPG signing is skipped gracefully.
+        required: false
+      gpg-passphrase:
+        description: >
+          Passphrase for the GPG private key.
+          When omitted, GPG signing is skipped gracefully.
+        required: false
 
 # ─────────────────────────────────────────────────────────────────────────────
 jobs:
@@ -331,10 +341,24 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - name: Generate checksums
+      - name: Generate checksums and GPG sign
         if: ${{ inputs.build-binary }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.gpg-private-key }}
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
         working-directory: dist
-        run: sha256sum * > checksums.txt
+        run: |
+          set -euo pipefail
+          sha256sum * > checksums.txt
+          if [ -n "${GPG_PRIVATE_KEY:-}" ]; then
+            echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "${GPG_PASSPHRASE}" \
+              --detach-sign --armor checksums.txt
+            echo "✅ GPG signature created: checksums.txt.asc"
+          else
+            echo "⚠️ GPG_PRIVATE_KEY not set — skipping GPG signing"
+          fi
 
       - name: Create GitHub Release (library — no binaries)
         if: ${{ !inputs.build-binary }}
