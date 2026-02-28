@@ -88,3 +88,9 @@ _site/
 .sass-cache/
 .jekyll-cache/
 .jekyll-metadata
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl

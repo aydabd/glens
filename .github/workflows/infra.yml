@@ -18,16 +18,22 @@ jobs:
     needs: validate
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [dev, prod]
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-      - run: echo "Terraform plan (requires GCP credentials)"
+      - run: echo "terraform workspace select ${{ matrix.workspace }} && terraform plan"
   apply:
     needs: validate
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: production
+    strategy:
+      matrix:
+        workspace: [dev, prod]
+    environment: ${{ matrix.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-      - run: echo "Terraform apply (requires GCP credentials)"
+      - run: echo "terraform workspace select ${{ matrix.workspace }} && terraform apply"
