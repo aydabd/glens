@@ -1,6 +1,6 @@
 # Glens SaaS Transformation Plan
 
-> Master plan: Glens CLI → multi-tenant SaaS on GCP (17 phases).
+> Master plan: Glens CLI → multi-tenant SaaS on GCP (19 phases).
 
 ## Guiding Principles
 
@@ -35,6 +35,7 @@
 | IP-01 – IP-05 | Issue provider interface, GitHub/GitLab/Jira | 17 |
 | PD-01 – PD-06 | RFC 9457 Problem Details error responses | 18 |
 | EA-01 – EA-08 | Enterprise SSO, RBAC, org-level auth | 18 |
+| RT-01 – RT-10 | Real-time analysis streaming, SSE, live monitoring | 19 |
 
 ## Phases (all independent, parallel)
 
@@ -58,6 +59,7 @@
 | 16 | [PHASE16_RELEASES_VERSIONING.md](PHASE16_RELEASES_VERSIONING.md) | Semver releases |
 | 17 | [PHASE17_ISSUE_PROVIDER.md](PHASE17_ISSUE_PROVIDER.md) | Issue providers |
 | 18 | [PHASE18_RFC9457_ENTERPRISE_AUTH.md](PHASE18_RFC9457_ENTERPRISE_AUTH.md) | RFC 9457, SSO, RBAC |
+| 19 | [PHASE19_REALTIME_ANALYSIS.md](PHASE19_REALTIME_ANALYSIS.md) | Real-time SSE streaming |
 
 ## Tech Stack (latest stable, Feb 2026)
 
