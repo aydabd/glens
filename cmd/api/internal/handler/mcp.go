@@ -28,11 +28,16 @@ type rpcError struct {
 }
 
 // MCP handles POST /api/v1/mcp JSON-RPC 2.0 requests.
+// Note: JSON-RPC 2.0 defines its own error format (not RFC 9457)
+// because JSON-RPC clients expect {jsonrpc, id, error} responses.
 func MCP(w http.ResponseWriter, r *http.Request) {
 	var req jsonRPCRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeProblem(w, r, http.StatusBadRequest, ProblemTypeValidation,
-			"Parse Error", fmt.Sprintf("invalid JSON-RPC request: %v", err))
+		writeJSON(w, http.StatusBadRequest, jsonRPCResponse{
+			JSONRPC: "2.0",
+			ID:      nil,
+			Error:   &rpcError{Code: -32700, Message: fmt.Sprintf("parse error: %v", err)},
+		})
 		return
 	}
 
