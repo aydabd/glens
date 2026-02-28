@@ -22,10 +22,16 @@ func Health(version string) http.HandlerFunc {
 }
 
 // writeJSON marshals v to JSON and writes it to w with the given status code.
+// It encodes to a buffer first so that encoding failures are caught before
+// headers are sent, avoiding a mixed/corrupted response body.
 func writeJSON(w http.ResponseWriter, status int, v any) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		http.Error(w, "failed to encode JSON response", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		http.Error(w, "failed to encode JSON response", http.StatusInternalServerError)
-	}
+	_, _ = w.Write(data)
+	_, _ = w.Write([]byte("\n"))
 }

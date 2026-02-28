@@ -10,9 +10,12 @@ servers:
   - url: http://localhost:8080
     description: Development
 
-security:
-  - BearerAuth: []
-  - APIKeyAuth: []
+# NOTE: Global security is disabled until auth middleware is implemented
+# (Phase 18 / EA-01). Re-enable when BearerAuth + APIKeyAuth enforcement
+# is in place.
+# security:
+#   - BearerAuth: []
+#   - APIKeyAuth: []
 
 paths:
   /healthz:
@@ -123,6 +126,8 @@ paths:
     post:
       summary: Create issue via provider
       operationId: createIssue
+      x-not-implemented: true
+      description: "**Not yet implemented** — planned for a future phase."
       requestBody:
         required: true
         content:
@@ -147,6 +152,8 @@ paths:
     get:
       summary: Get report by ID
       operationId: getReport
+      x-not-implemented: true
+      description: "**Not yet implemented** — planned for a future phase."
       parameters:
         - name: id
           in: path
@@ -171,6 +178,8 @@ paths:
     post:
       summary: Store a secret
       operationId: storeSecret
+      x-not-implemented: true
+      description: "**Not yet implemented** — planned for Phase 7 (auth proxy)."
       requestBody:
         required: true
         content:
@@ -195,6 +204,8 @@ paths:
     post:
       summary: Create API key
       operationId: createAPIKey
+      x-not-implemented: true
+      description: "**Not yet implemented** — planned for Phase 5 (auth & multi-tenancy)."
       requestBody:
         required: true
         content:

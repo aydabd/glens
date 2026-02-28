@@ -34,11 +34,11 @@ func (g *GitHubProvider) CreateIssue(_ context.Context, req CreateIssueRequest) 
 }
 
 func (g *GitHubProvider) UpdateIssue(_ context.Context, _ string, _ UpdateIssueRequest) error {
-	return nil
+	return fmt.Errorf("github: UpdateIssue not implemented")
 }
 
 func (g *GitHubProvider) CloseIssue(_ context.Context, _ string) error {
-	return nil
+	return fmt.Errorf("github: CloseIssue not implemented")
 }
 
 func (g *GitHubProvider) ListIssues(_ context.Context, _ IssueFilter) ([]IssueResult, error) {

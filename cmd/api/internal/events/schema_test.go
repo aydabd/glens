@@ -55,6 +55,11 @@ func TestValidateEvent_MissingFields(t *testing.T) {
 			event:  Event{EventType: "t", EventID: "id", Timestamp: time.Now()},
 			errMsg: "workspace_id is required",
 		},
+		{
+			name:   "missing payload",
+			event:  Event{EventType: "t", EventID: "id", Timestamp: time.Now(), WorkspaceID: "ws"},
+			errMsg: "payload is required",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -71,6 +76,7 @@ func TestValidateEvent_AllFieldsPresent(t *testing.T) {
 		EventID:     "abc-123",
 		Timestamp:   time.Now(),
 		WorkspaceID: "ws-1",
+		Payload:     TestFailedPayload{RunID: "r1", EndpointPath: "/test", EndpointMethod: "GET", Model: "gpt-4", ErrorMessage: "err"},
 	}
 	assert.NoError(t, ValidateEvent(e))
 }
