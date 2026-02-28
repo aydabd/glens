@@ -1,0 +1,28 @@
+# Module-specific pre-commit: Terraform linting for infra/.
+# The root .pre-commit-config.yaml handles language-agnostic checks.
+# This config handles Terraform-specific checks via make targets.
+#
+# Usage:
+#   cd infra && pre-commit run --all-files          # run all hooks
+#   cd infra && pre-commit run --all-files -j 4     # run hooks in parallel
+#   cd infra && make lint                           # same checks via make
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+  - repo: local
+    hooks:
+      - id: terraform-fmt-check
+        name: terraform fmt check
+        entry: make fmt-check
+        language: system
+        files: "\\.tf$"
+        pass_filenames: false
+      - id: terraform-validate
+        name: terraform validate
+        entry: make validate
+        language: system
+        files: "\\.tf$"
+        pass_filenames: false

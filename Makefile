@@ -222,9 +222,12 @@ bench: check-env ## Run benchmarks
 	@$(GOTEST) -bench=. -benchmem ./... | tee $(REPORTS_DIR)/bench.out
 
 .PHONY: lint
-lint: check-env ## Run linters
+lint: check-env ## Run language-agnostic linters (root pre-commit)
 	@$(MAMBA_RUN) pre-commit run --all-files
 	@echo "$(SUCCESS) Linting completed"
+	@echo "$(INFO) Module-specific linting: cd <module> && make lint"
+	@echo "    Go modules:  cmd/glens  cmd/api  cmd/tools/demo  cmd/tools/accuracy  pkg/logging"
+	@echo "    Terraform:   infra"
 
 # ==============================================================================
 # EXECUTION & ANALYSIS

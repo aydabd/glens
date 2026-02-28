@@ -1,3 +1,9 @@
+# Root pre-commit: language-agnostic linting only.
+# Language-specific linting (Go, Terraform, etc.) lives in each module's own
+# .pre-commit-config.yaml and is run via: cd <module> && make lint
+# See individual modules for details:
+#   cmd/glens/       cmd/api/         cmd/tools/demo/
+#   cmd/tools/accuracy/  pkg/logging/   infra/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -48,45 +54,3 @@ repos:
         language: system
         files: '(^|/)([Dd]ockerfile|[Cc]ontainerfile)([._-][^/]+)?$|.*\.dockerfile$'
         pass_filenames: true
-      - id: terraform-fmt
-        name: terraform fmt
-        entry: bash -c 'cd infra && terraform fmt -check -recursive .'
-        language: system
-        files: "^infra/.*\\.tf$"
-        always_run: false
-        pass_filenames: false
-      - id: lint-glens
-        name: lint cmd/glens
-        entry: bash -c 'cd cmd/glens && make all'
-        language: system
-        files: "^cmd/glens/.*\\.go$"
-        always_run: false
-        pass_filenames: false
-      - id: lint-api
-        name: lint cmd/api
-        entry: bash -c 'cd cmd/api && make all'
-        language: system
-        files: "^cmd/api/.*\\.go$"
-        always_run: false
-        pass_filenames: false
-      - id: lint-demo
-        name: lint cmd/tools/demo
-        entry: bash -c 'cd cmd/tools/demo && make all'
-        language: system
-        files: "^cmd/tools/demo/.*\\.go$"
-        always_run: false
-        pass_filenames: false
-      - id: lint-accuracy
-        name: lint cmd/tools/accuracy
-        entry: bash -c 'cd cmd/tools/accuracy && make all'
-        language: system
-        files: "^cmd/tools/accuracy/.*\\.go$"
-        always_run: false
-        pass_filenames: false
-      - id: lint-logging
-        name: lint pkg/logging
-        entry: bash -c 'cd pkg/logging && make all'
-        language: system
-        files: "^pkg/logging/.*\\.go$"
-        always_run: false
-        pass_filenames: false
