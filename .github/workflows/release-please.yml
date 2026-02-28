@@ -6,6 +6,10 @@ name: Release Please
 #
 # Binary modules delegate build + sign + upload to the reusable
 # build-sign-release.yml workflow.
+#
+# Token: uses RELEASE_PLEASE_TOKEN (PAT) if available, otherwise GITHUB_TOKEN.
+# When using GITHUB_TOKEN, enable "Allow GitHub Actions to create and approve
+# pull requests" in Settings > Actions > General > Workflow permissions.
 
 on:
   push:
@@ -36,7 +40,7 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
   # ── Per-module build + sign + release via reusable workflow ──────────────────
   release-glens:

@@ -10,6 +10,20 @@
 3. **Signed artifacts** — binaries ship with SHA256 checksums and GPG signatures.
 4. **Zero manual steps** — merging to `main` is the only human action required.
 
+## Prerequisites
+
+Release Please needs permission to create pull requests. Choose **one** of:
+
+1. **Enable the repository setting** (simplest):
+   Go to **Settings → Actions → General → Workflow permissions** and check
+   **"Allow GitHub Actions to create and approve pull requests"**.
+
+2. **Use a Personal Access Token (PAT)**:
+   Create a fine-grained PAT with `contents: write` and `pull-requests: write`
+   scopes, then add it as a repository secret named `RELEASE_PLEASE_TOKEN`.
+   The workflow uses this token automatically when present, falling back to
+   `GITHUB_TOKEN`.
+
 ## Release Automation — Google Release Please
 
 [Release Please](https://github.com/googleapis/release-please) manages version
