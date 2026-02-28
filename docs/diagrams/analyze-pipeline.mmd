@@ -1,0 +1,33 @@
+%%{init: {'theme': 'base', 'themeVariables': {'actorTextColor': '#0f172a', 'actorBkg': '#e2e8f0', 'actorBorder': '#475569', 'signalColor': '#1e40af', 'signalTextColor': '#0f172a', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#0f172a', 'noteBorderColor': '#d97706', 'fontSize': '14px'}}}%%
+sequenceDiagram
+    actor User
+    participant CLI as cmd/glens
+    participant Parser as parser
+    participant AI as AI Manager
+    participant Provider as AI Provider
+    participant Gen as generator
+    participant GH as GitHub Client
+    participant Rep as reporter
+
+    User ->> CLI: glens analyze <spec>
+    CLI ->> Parser: ParseOpenAPISpec(url)
+    Parser -->> CLI: []Endpoint
+
+    loop Each endpoint
+        CLI ->> AI: GenerateTest(endpoint)
+        AI ->> Provider: prompt with endpoint schema
+        Provider -->> AI: test code
+        AI -->> CLI: TestGenerationResult
+
+        CLI ->> Gen: ExecuteTest(testCode)
+        Gen -->> CLI: ExecutionResult
+
+        alt Real test failure
+            CLI ->> GH: CreateEndpointIssue()
+            GH -->> CLI: issue URL
+        end
+    end
+
+    CLI ->> Rep: GenerateReport(results)
+    Rep -->> CLI: Markdown + HTML
+    CLI -->> User: report files
