@@ -5,6 +5,8 @@ on:
     paths: ['cmd/api/**']
   pull_request:
     paths: ['cmd/api/**']
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
