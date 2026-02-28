@@ -1,0 +1,18 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#b45309', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+flowchart TD
+    START["glens-accuracy &lt;specs&gt;"] --> FLAGS["Parse flags — --output, --version"]
+    FLAGS --> LOAD["analyze.Load — file or HTTP URL"]
+    LOAD --> COUNT["analyze.Count — endpoints per path/method"]
+    COUNT --> BUILD["report.Build — markdown table"]
+    BUILD --> WRITE{--output?}
+    WRITE -->|Yes| FILE["Write to file"]
+    WRITE -->|No| STDOUT["Print to stdout"]
+
+    style START fill:#b45309,stroke:#92400e,color:#fff
+    style FLAGS fill:#475569,stroke:#334155,color:#fff
+    style LOAD fill:#0369a1,stroke:#075985,color:#fff
+    style COUNT fill:#6d28d9,stroke:#5b21b6,color:#fff
+    style BUILD fill:#047857,stroke:#065f46,color:#fff
+    style WRITE fill:#475569,stroke:#334155,color:#fff
+    style FILE fill:#15803d,stroke:#166534,color:#fff
+    style STDOUT fill:#15803d,stroke:#166534,color:#fff

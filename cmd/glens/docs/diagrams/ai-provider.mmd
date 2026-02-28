@@ -1,0 +1,13 @@
+%%{init: {'theme': 'base', 'themeVariables': {'actorTextColor': '#0f172a', 'actorBkg': '#e2e8f0', 'actorBorder': '#475569', 'signalColor': '#1e40af', 'signalTextColor': '#0f172a', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#0f172a', 'noteBorderColor': '#d97706', 'fontSize': '14px'}}}%%
+sequenceDiagram
+    participant Analyze as analyze.go
+    participant Mgr as AI Manager
+    participant Client as AI Client
+    participant API as Provider API
+
+    Analyze ->> Mgr: GenerateTest(model, endpoint)
+    Mgr ->> Client: select client for model
+    Client ->> API: HTTP POST (prompt + schema)
+    API -->> Client: generated Go test code
+    Client -->> Mgr: TestGenerationResult
+    Mgr -->> Analyze: test code + metadata

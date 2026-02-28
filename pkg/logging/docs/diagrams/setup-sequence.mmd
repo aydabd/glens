@@ -1,0 +1,13 @@
+%%{init: {'theme': 'base', 'themeVariables': {'actorTextColor': '#0f172a', 'actorBkg': '#e2e8f0', 'actorBorder': '#475569', 'signalColor': '#1e40af', 'signalTextColor': '#0f172a', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#0f172a', 'noteBorderColor': '#d97706', 'fontSize': '14px'}}}%%
+sequenceDiagram
+    participant App as Application
+    participant Log as pkg/logging
+    participant ZL as zerolog
+
+    App ->> Log: Setup(Config{Level, Format})
+    Log ->> ZL: set global log level
+    Log ->> ZL: set output writer (console or JSON)
+    Log -->> App: logging ready
+
+    App ->> ZL: log.Info().Msg("started")
+    Note over ZL: output to stdout

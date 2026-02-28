@@ -1,0 +1,20 @@
+%%{init: {'theme': 'base', 'themeVariables': {'actorTextColor': '#0f172a', 'actorBkg': '#e2e8f0', 'actorBorder': '#475569', 'signalColor': '#1e40af', 'signalTextColor': '#0f172a', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#0f172a', 'noteBorderColor': '#d97706', 'fontSize': '14px'}}}%%
+sequenceDiagram
+    actor Client
+    participant MW as Middleware
+    participant H as handler.Analyze
+    participant Core as glens core
+
+    Client ->> MW: POST /api/v1/analyze
+    MW ->> MW: Recovery → Logging → CORS
+    MW ->> H: route matched
+
+    H ->> H: decode JSON body
+    H ->> Core: run analysis pipeline
+    Core -->> H: results
+    H ->> H: encode JSON response
+    H -->> Client: 200 OK + results
+
+    alt Error
+        H -->> Client: 4xx/5xx Problem Details
+    end

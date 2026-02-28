@@ -1,0 +1,25 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#15803d', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+graph TB
+    subgraph PKG ["pkg/logging"]
+        SETUP["Setup(Config) — initialise zerolog"]
+        LEVEL["Level — info, debug, warn, error"]
+        FORMAT["Format — console, json"]
+    end
+
+    GLENS["cmd/glens — main CLI"]
+    API["cmd/api — REST API server"]
+
+    GLENS -->|imports| SETUP
+    API -->|imports| SETUP
+
+    DEMO["cmd/tools/demo — zero deps, no import"]
+    ACC["cmd/tools/accuracy — zero deps, no import"]
+
+    style PKG fill:#f0fdf4,stroke:#86efac,color:#0f172a
+    style SETUP fill:#15803d,stroke:#166534,color:#fff
+    style LEVEL fill:#047857,stroke:#065f46,color:#fff
+    style FORMAT fill:#047857,stroke:#065f46,color:#fff
+    style GLENS fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style API fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style DEMO fill:#64748b,stroke:#475569,color:#fff
+    style ACC fill:#64748b,stroke:#475569,color:#fff

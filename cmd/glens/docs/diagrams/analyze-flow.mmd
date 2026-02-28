@@ -1,0 +1,36 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1e40af', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+flowchart TD
+    START["glens analyze &lt;spec&gt;"] --> INIT["Load config — Setup logging"]
+    INIT --> PARSE["parser.ParseOpenAPISpec — file or URL"]
+    PARSE --> ENDPOINTS["Extract endpoints — method, path, params, schemas"]
+    ENDPOINTS --> LOOP["For each endpoint"]
+
+    LOOP --> AIGEN["AI: generate test code"]
+    AIGEN --> EXEC["generator: compile + run test"]
+    EXEC --> CHECK{Passed?}
+
+    CHECK -->|Yes| NEXT["Next endpoint"]
+    CHECK -->|No| REAL{Real failure?}
+    REAL -->|No| LOG["Log warning — skip issue"]
+    REAL -->|Yes| GHISSUE["github: create issue"]
+    LOG --> NEXT
+    GHISSUE --> NEXT
+    NEXT --> LOOP
+
+    LOOP -->|All done| REPORT["reporter: generate Markdown + HTML"]
+    REPORT --> DONE["✅ Output files"]
+
+    style START fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style INIT fill:#475569,stroke:#334155,color:#fff
+    style PARSE fill:#0369a1,stroke:#075985,color:#fff
+    style ENDPOINTS fill:#0369a1,stroke:#075985,color:#fff
+    style LOOP fill:#6d28d9,stroke:#5b21b6,color:#fff
+    style AIGEN fill:#b45309,stroke:#92400e,color:#fff
+    style EXEC fill:#6d28d9,stroke:#5b21b6,color:#fff
+    style CHECK fill:#475569,stroke:#334155,color:#fff
+    style REAL fill:#475569,stroke:#334155,color:#fff
+    style LOG fill:#d97706,stroke:#b45309,color:#fff
+    style GHISSUE fill:#b91c1c,stroke:#991b1b,color:#fff
+    style NEXT fill:#64748b,stroke:#475569,color:#fff
+    style REPORT fill:#047857,stroke:#065f46,color:#fff
+    style DONE fill:#15803d,stroke:#166534,color:#fff
