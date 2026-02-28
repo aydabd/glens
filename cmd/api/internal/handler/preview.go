@@ -41,7 +41,7 @@ func AnalyzePreview(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, previewResponse{
 		SpecURL: req.SpecURL,
 		Endpoints: []endpointCategory{
-			{Path: "/pets", Method: "GET", RiskLevel: "low"},
+			{Path: "/pets", Method: "GET", RiskLevel: "safe"},
 			{Path: "/pets", Method: "POST", RiskLevel: "medium"},
 			{Path: "/pets/{id}", Method: "DELETE", RiskLevel: "high"},
 		},
