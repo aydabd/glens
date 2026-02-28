@@ -1,0 +1,34 @@
+services:
+  firestore:
+    image: google/cloud-sdk:latest
+    command: gcloud beta emulators firestore start --host-port=0.0.0.0:8085
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pubsub:
+    image: google/cloud-sdk:latest
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8086
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  secret-mock:
+    build:
+      context: ./test/mock-secrets
+      dockerfile: Dockerfile
+    ports:
+      - "8088:8088"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
