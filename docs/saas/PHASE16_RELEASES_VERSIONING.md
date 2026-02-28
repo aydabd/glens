@@ -92,7 +92,7 @@ Rollback = route traffic to previous Cloud Run revision (instant).
 
 ## Success Criteria
 
-- [ ] `release-please` creates versioned release PRs
+- [x] `release-please` creates versioned release PRs
 - [ ] RC tags auto-deploy to dev; stable tags to prod
 - [ ] Regression suite gates prod promotion
 - [ ] Rollback restores previous version in < 2 min

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "pkg/logging": {
+      "release-type": "go",
+      "package-name": "logging",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "component": "pkg/logging",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "cmd/glens": {
+      "release-type": "go",
+      "package-name": "glens",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "component": "cmd/glens",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "cmd/api": {
+      "release-type": "go",
+      "package-name": "api",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "component": "cmd/api",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "cmd/tools/demo": {
+      "release-type": "go",
+      "package-name": "demo",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "component": "cmd/tools/demo",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "cmd/tools/accuracy": {
+      "release-type": "go",
+      "package-name": "accuracy",
+      "tag-separator": "/",
+      "include-component-in-tag": true,
+      "component": "cmd/tools/accuracy",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    }
+  },
+  "separate-pull-requests": true,
+  "sequential-calls": false
+}

@@ -1,0 +1,124 @@
+name: Build, Sign & Release (Reusable)
+# ─────────────────────────────────────────────────────────────────────────────
+# Reusable workflow for cross-compiling Go binaries, generating signed
+# checksums, and uploading assets to an existing GitHub Release.
+#
+# Usage:
+#   uses: ./.github/workflows/build-sign-release.yml
+#   with:
+#     binary-name: glens
+#     working-directory: cmd/glens
+#     tag-name: cmd/glens/v1.2.3
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      binary-name:
+        description: >
+          Output binary name prefix (e.g. "glens", "glens-api",
+          "glens-demo"). Binaries are named <binary-name>-<os>-<arch>.
+        required: true
+        type: string
+      working-directory:
+        description: >
+          Module directory containing go.mod (e.g. "cmd/glens",
+          "cmd/tools/demo").
+        required: true
+        type: string
+      go-version:
+        description: Go toolchain version to use.
+        required: false
+        type: string
+        default: "1.25"
+      tag-name:
+        description: >
+          Full git tag for the GitHub Release (e.g. "cmd/glens/v1.2.3").
+          The version string is extracted automatically.
+        required: true
+        type: string
+    secrets:
+      GPG_PRIVATE_KEY:
+        description: >
+          ASCII-armoured GPG private key for signing checksums.
+          When omitted, GPG signing is skipped gracefully.
+        required: false
+      GPG_PASSPHRASE:
+        description: >
+          Passphrase for the GPG private key.
+          When omitted, GPG signing is skipped gracefully.
+        required: false
+
+jobs:
+  # ── Cross-compile binaries for all platforms ────────────────────────────────
+  build:
+    name: Build ${{ inputs.binary-name }} / ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag-name }}
+        run: echo "version=${TAG##*/v}" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/go-build
+        with:
+          binary-name: ${{ inputs.binary-name }}
+          working-directory: ${{ inputs.working-directory }}
+          go-version: ${{ inputs.go-version }}
+          version: ${{ steps.version.outputs.version }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.binary-name }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/
+
+  # ── Sign checksums and upload assets to release ─────────────────────────────
+  sign-release:
+    name: Sign & upload — ${{ inputs.binary-name }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.binary-name }}-*
+          path: dist/
+          merge-multiple: true
+
+      - uses: ./.github/actions/sign-assets
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag-name }}
+          files: dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}

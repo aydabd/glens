@@ -1,0 +1,80 @@
+name: Release Please
+
+# Release Please creates release PRs automatically based on conventional commits.
+# Each module gets its own isolated release PR with a CHANGELOG.
+# Merging a release PR creates a GitHub Release with the correct semver tag.
+#
+# Binary modules delegate build + sign + upload to the reusable
+# build-sign-release.yml workflow.
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      logging--release_created: ${{ steps.release.outputs['pkg/logging--release_created'] }}
+      logging--tag_name: ${{ steps.release.outputs['pkg/logging--tag_name'] }}
+      glens--release_created: ${{ steps.release.outputs['cmd/glens--release_created'] }}
+      glens--tag_name: ${{ steps.release.outputs['cmd/glens--tag_name'] }}
+      api--release_created: ${{ steps.release.outputs['cmd/api--release_created'] }}
+      api--tag_name: ${{ steps.release.outputs['cmd/api--tag_name'] }}
+      demo--release_created: ${{ steps.release.outputs['cmd/tools/demo--release_created'] }}
+      demo--tag_name: ${{ steps.release.outputs['cmd/tools/demo--tag_name'] }}
+      accuracy--release_created: ${{ steps.release.outputs['cmd/tools/accuracy--release_created'] }}
+      accuracy--tag_name: ${{ steps.release.outputs['cmd/tools/accuracy--tag_name'] }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Per-module build + sign + release via reusable workflow ──────────────────
+  release-glens:
+    needs: release-please
+    if: needs.release-please.outputs.glens--release_created == 'true'
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens
+      working-directory: cmd/glens
+      tag-name: ${{ needs.release-please.outputs.glens--tag_name }}
+    secrets: inherit
+
+  release-api:
+    needs: release-please
+    if: needs.release-please.outputs.api--release_created == 'true'
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens-api
+      working-directory: cmd/api
+      tag-name: ${{ needs.release-please.outputs.api--tag_name }}
+    secrets: inherit
+
+  release-demo:
+    needs: release-please
+    if: needs.release-please.outputs.demo--release_created == 'true'
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens-demo
+      working-directory: cmd/tools/demo
+      tag-name: ${{ needs.release-please.outputs.demo--tag_name }}
+    secrets: inherit
+
+  release-accuracy:
+    needs: release-please
+    if: needs.release-please.outputs.accuracy--release_created == 'true'
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens-accuracy
+      working-directory: cmd/tools/accuracy
+      tag-name: ${{ needs.release-please.outputs.accuracy--tag_name }}
+    secrets: inherit

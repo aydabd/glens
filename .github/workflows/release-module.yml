@@ -92,6 +92,16 @@ on:
           Token with contents:write permission. When omitted, the workflow uses
           the calling workflow's GITHUB_TOKEN (pass secrets: inherit).
         required: false
+      GPG_PRIVATE_KEY:
+        description: >
+          ASCII-armoured GPG private key for signing checksums.
+          When omitted, GPG signing is skipped gracefully.
+        required: false
+      GPG_PASSPHRASE:
+        description: >
+          Passphrase for the GPG private key.
+          When omitted, GPG signing is skipped gracefully.
+        required: false
 
 # ─────────────────────────────────────────────────────────────────────────────
 jobs:
@@ -262,49 +272,22 @@ jobs:
             goarch: amd64
           - goos: windows
             goarch: arm64
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v5
 
-      - name: Validate binary-name input
-        shell: bash
-        env:
-          BINARY_NAME: ${{ inputs.binary-name }}
-        run: |
-          if [ -z "$BINARY_NAME" ]; then
-            echo "::error::binary-name is required when build-binary is true"
-            exit 1
-          fi
-
-      - uses: actions/setup-go@v6
+      - uses: ./.github/actions/go-build
         with:
+          binary-name: ${{ inputs.binary-name }}
+          working-directory: ${{ inputs.working-directory }}
           go-version: ${{ inputs.go-version }}
-          cache: true
-          cache-dependency-path: ${{ inputs.working-directory }}/go.mod
-
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-          VERSION: ${{ needs.tag.outputs.version }}
-          BINARY_NAME: ${{ inputs.binary-name }}
-        run: |
-          set -euo pipefail
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          BINARY="${BINARY_NAME}-${GOOS}-${GOARCH}${EXT}"
-          mkdir -p "${{ runner.temp }}/dist"
-          go build \
-            -ldflags="-s -w -X main.version=${VERSION}" \
-            -o "${{ runner.temp }}/dist/${BINARY}" .
+          version: ${{ needs.tag.outputs.version }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.binary-name }}-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ${{ runner.temp }}/dist/
+          path: dist/
 
   # ── 3. Create GitHub Release ───────────────────────────────────────────────
   release:
@@ -331,10 +314,12 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - name: Generate checksums
+      - name: Sign assets
         if: ${{ inputs.build-binary }}
-        working-directory: dist
-        run: sha256sum * > checksums.txt
+        uses: ./.github/actions/sign-assets
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Create GitHub Release (library — no binaries)
         if: ${{ !inputs.build-binary }}

@@ -234,6 +234,106 @@ new_option: "${ENV_VAR}"
 
 If any answer is "no", reconsider the approach.
 
+## Mandatory Linting — Before Every Commit
+
+**Always** run linters on every changed file before committing or pushing. This is
+non-negotiable — CI will reject unlinted changes.
+
+### Go modules
+
+For each Go module you modified, run `make lint` (or `make all` for the full suite):
+
+```bash
+cd cmd/glens && make lint        # golangci-lint
+cd cmd/tools/demo && make lint
+cd cmd/tools/accuracy && make lint
+cd pkg/logging && make lint
+```
+
+### Markdown files
+
+If you created or edited any `.md` file, run the markdown linter from the repo root:
+
+```bash
+npx markdownlint-cli '**/*.md'
+```
+
+### YAML / workflow files
+
+If you created or edited any `.yml` or `.yaml` file, validate syntax:
+
+```bash
+python3 -c "import yaml; yaml.safe_load(open('path/to/file.yml'))"
+```
+
+### Pre-commit hooks
+
+If `.pre-commit-config.yaml` is set up, run all hooks on changed files:
+
+```bash
+pre-commit run --files <changed-files>
+```
+
+**Never skip linting.** If a linter reports errors, fix them before pushing.
+
+## Conventional Commits
+
+All commits **must** follow the [Conventional Commits](https://www.conventionalcommits.org/)
+specification. This is enforced by the `conventional-pre-commit` hook and required by
+Release Please for automatic version bumping.
+
+### Format
+
+```text
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Allowed types
+
+| Type | Version bump | Use when |
+|------|-------------|----------|
+| `feat` | minor | Adding new functionality |
+| `feat!` | **major** | Breaking change in a feature |
+| `fix` | patch | Bug fix |
+| `docs` | — | Documentation only |
+| `style` | — | Formatting, no code change |
+| `refactor` | patch | Code restructuring, no feature/fix |
+| `perf` | patch | Performance improvement |
+| `test` | — | Adding or correcting tests |
+| `build` | patch | Build system or dependency changes |
+| `ci` | — | CI configuration changes |
+| `chore` | — | Maintenance tasks |
+| `revert` | patch | Reverting a previous commit |
+
+A `BREAKING CHANGE:` footer in any commit type triggers a **major** bump.
+
+### Scoping to modules
+
+Use the module directory as scope:
+
+```text
+feat(cmd/glens): add --output flag for JSON reports
+fix(pkg/logging): handle nil logger gracefully
+feat(cmd/api)!: redesign authentication endpoint
+```
+
+### Examples
+
+```text
+feat: add streaming support for AI responses
+fix(cmd/glens): correct exit code on test failure
+docs: update quickstart with new flags
+chore(ci): upgrade Go version to 1.25
+refactor(pkg/logging): simplify level configuration
+feat(cmd/api)!: change /analyze endpoint response format
+
+BREAKING CHANGE: response field "result" renamed to "analysis"
+```
+
 ## What to Avoid
 
 - Features added "just in case"
