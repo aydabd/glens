@@ -1,0 +1,15 @@
+%%{init: {'theme': 'base', 'themeVariables': {'actorTextColor': '#0f172a', 'actorBkg': '#e2e8f0', 'actorBorder': '#475569', 'signalColor': '#1e40af', 'signalTextColor': '#0f172a', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#0f172a', 'noteBorderColor': '#d97706', 'fontSize': '14px'}}}%%
+sequenceDiagram
+    participant Analyze as analyze.go
+    participant Gen as generator
+    participant FS as temp directory
+    participant Go as go test
+
+    Analyze ->> Gen: ExecuteTest(code, endpoint)
+    Gen ->> FS: create temp dir
+    Gen ->> FS: write test file + go.mod
+    Gen ->> Go: run go test ./...
+    Go -->> Gen: stdout + stderr + exit code
+    Gen ->> Gen: parse results
+    Gen -->> Analyze: ExecutionResult
+    Note over Gen: compiled? passed? failures?

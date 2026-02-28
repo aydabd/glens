@@ -1,0 +1,30 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#7c3aed', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+flowchart TD
+    REQ["🖥️ HTTP Request"] --> MW1["Recovery middleware — catch panics"]
+    MW1 --> MW2["Logging middleware — request/response log"]
+    MW2 --> MW3["CORS middleware — cross-origin headers"]
+    MW3 --> ROUTER["Router — http.ServeMux"]
+
+    ROUTER --> H1["GET /healthz — version + status"]
+    ROUTER --> H2["POST /api/v1/analyze — full analysis run"]
+    ROUTER --> H3["POST /api/v1/analyze/preview — dry-run preview"]
+    ROUTER --> H4["GET /api/v1/models — list AI models"]
+    ROUTER --> H5["POST /api/v1/mcp — MCP protocol"]
+
+    H1 --> RESP["JSON Response"]
+    H2 --> RESP
+    H3 --> RESP
+    H4 --> RESP
+    H5 --> RESP
+
+    style REQ fill:#0f172a,stroke:#1e293b,color:#fff
+    style MW1 fill:#b91c1c,stroke:#991b1b,color:#fff
+    style MW2 fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style MW3 fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style ROUTER fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style H1 fill:#15803d,stroke:#166534,color:#fff
+    style H2 fill:#b45309,stroke:#92400e,color:#fff
+    style H3 fill:#b45309,stroke:#92400e,color:#fff
+    style H4 fill:#0369a1,stroke:#075985,color:#fff
+    style H5 fill:#6d28d9,stroke:#5b21b6,color:#fff
+    style RESP fill:#15803d,stroke:#166534,color:#fff
