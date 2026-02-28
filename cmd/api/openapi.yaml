@@ -590,12 +590,50 @@ components:
 
     ErrorResponse:
       type: object
+      description: RFC 9457 Problem Details response
       required:
-        - error
+        - type
+        - title
+        - status
+        - detail
+        - instance
       properties:
-        error:
+        type:
           type: string
-          description: Error message
+          format: uri
+          description: URI reference identifying the problem type
+          example: https://glens.dev/errors/validation
+        title:
+          type: string
+          description: Short human-readable summary
+          example: Validation Error
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence
+          example: spec_url is required
+        instance:
+          type: string
+          description: URI reference identifying the specific occurrence
+          example: /api/v1/analyze
+        errors:
+          type: array
+          description: Per-field validation errors (extension member)
+          items:
+            type: object
+            required:
+              - field
+              - reason
+            properties:
+              field:
+                type: string
+                example: spec_url
+              reason:
+                type: string
+                example: required
 
     # --- Event schemas ---
 

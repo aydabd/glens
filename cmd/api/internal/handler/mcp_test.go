@@ -95,14 +95,16 @@ func TestMCP_InvalidJSON_ReturnsParseError(t *testing.T) {
 			MCP(rec, req)
 
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
+			assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
 
-			var resp jsonRPCResponse
+			var resp ProblemDetail
 			err := json.NewDecoder(rec.Body).Decode(&resp)
 			require.NoError(t, err)
-			assert.Equal(t, "2.0", resp.JSONRPC)
-			require.NotNil(t, resp.Error)
-			assert.Equal(t, -32700, resp.Error.Code)
-			assert.Contains(t, resp.Error.Message, "parse error")
+			assert.Equal(t, ProblemTypeValidation, resp.Type)
+			assert.Equal(t, "Parse Error", resp.Title)
+			assert.Equal(t, http.StatusBadRequest, resp.Status)
+			assert.Contains(t, resp.Detail, "invalid JSON-RPC request")
+			assert.Equal(t, "/api/v1/mcp", resp.Instance)
 		})
 	}
 }
