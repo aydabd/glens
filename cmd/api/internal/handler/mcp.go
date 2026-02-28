@@ -16,10 +16,10 @@ type jsonRPCRequest struct {
 
 // jsonRPCResponse represents a JSON-RPC 2.0 response.
 type jsonRPCResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	ID      any         `json:"id"`
-	Result  any         `json:"result,omitempty"`
-	Error   *rpcError   `json:"error,omitempty"`
+	JSONRPC string    `json:"jsonrpc"`
+	ID      any       `json:"id"`
+	Result  any       `json:"result,omitempty"`
+	Error   *rpcError `json:"error,omitempty"`
 }
 
 type rpcError struct {

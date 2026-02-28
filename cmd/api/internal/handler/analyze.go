@@ -10,8 +10,8 @@ import (
 
 // analyzeRequest is the JSON body for the analyze endpoint.
 type analyzeRequest struct {
-	SpecURL          string   `json:"spec_url"`
-	Models           []string `json:"models"`
+	SpecURL           string   `json:"spec_url"`
+	Models            []string `json:"models"`
 	ApprovedEndpoints []string `json:"approved_endpoints"`
 	SkippedEndpoints  []string `json:"skipped_endpoints"`
 }
