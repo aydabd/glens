@@ -5,6 +5,7 @@ import "strings"
 // Risk represents the risk level of an endpoint.
 type Risk string
 
+// Risk level constants.
 const (
 	RiskSafe   Risk = "safe"
 	RiskMedium Risk = "medium"
@@ -14,6 +15,7 @@ const (
 // Category represents the operational category of an endpoint.
 type Category string
 
+// Category constants for endpoint operations.
 const (
 	CategoryRead    Category = "read"
 	CategoryWrite   Category = "write"

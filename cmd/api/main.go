@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"glens/pkg/logging"
@@ -35,8 +36,14 @@ func main() {
 
 	wrapped := middleware.Recovery(middleware.Logging(middleware.CORS(mux)))
 
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%s", port),
+		Handler:           wrapped,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
 	log.Info().Str("port", port).Str("version", version).Msg("starting API server")
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), wrapped); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("server failed")
 	}
 }
