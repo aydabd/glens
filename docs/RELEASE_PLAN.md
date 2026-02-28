@@ -140,6 +140,7 @@ sha256sum -c checksums.txt --ignore-missing
 ### Setting up GPG signing
 
 1. Generate a dedicated release signing key:
+
    ```bash
    gpg --batch --gen-key <<EOF
    Key-Type: RSA
@@ -150,10 +151,13 @@ sha256sum -c checksums.txt --ignore-missing
    %no-protection
    EOF
    ```
+
 2. Export and add to GitHub repository secrets:
+
    ```bash
    gpg --armor --export-secret-keys release@glens.dev  # → GPG_PRIVATE_KEY
    ```
+
 3. Publish the public key in the repository or a keyserver.
 
 ## SaaS Service Releases

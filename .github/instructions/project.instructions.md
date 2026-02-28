@@ -234,6 +234,48 @@ new_option: "${ENV_VAR}"
 
 If any answer is "no", reconsider the approach.
 
+## Mandatory Linting — Before Every Commit
+
+**Always** run linters on every changed file before committing or pushing. This is
+non-negotiable — CI will reject unlinted changes.
+
+### Go modules
+
+For each Go module you modified, run `make lint` (or `make all` for the full suite):
+
+```bash
+cd cmd/glens && make lint        # golangci-lint
+cd cmd/tools/demo && make lint
+cd cmd/tools/accuracy && make lint
+cd pkg/logging && make lint
+```
+
+### Markdown files
+
+If you created or edited any `.md` file, run the markdown linter from the repo root:
+
+```bash
+npx markdownlint-cli '**/*.md'
+```
+
+### YAML / workflow files
+
+If you created or edited any `.yml` or `.yaml` file, validate syntax:
+
+```bash
+python3 -c "import yaml; yaml.safe_load(open('path/to/file.yml'))"
+```
+
+### Pre-commit hooks
+
+If `.pre-commit-config.yaml` is set up, run all hooks on changed files:
+
+```bash
+pre-commit run --files <changed-files>
+```
+
+**Never skip linting.** If a linter reports errors, fix them before pushing.
+
 ## Conventional Commits
 
 All commits **must** follow the [Conventional Commits](https://www.conventionalcommits.org/)
