@@ -1,0 +1,19 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#7c3aed', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+flowchart LR
+    CLIENT["🖥️ Client"] --> MW["Middleware — Recovery → Logging → CORS"]
+    MW --> ROUTER["Router"]
+
+    ROUTER --> H1["GET /healthz"]
+    ROUTER --> H2["POST /api/v1/analyze"]
+    ROUTER --> H3["POST /api/v1/analyze/preview"]
+    ROUTER --> H4["GET /api/v1/models"]
+    ROUTER --> H5["POST /api/v1/mcp"]
+
+    style CLIENT fill:#0f172a,stroke:#1e293b,color:#fff
+    style MW fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style ROUTER fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style H1 fill:#15803d,stroke:#166534,color:#fff
+    style H2 fill:#b45309,stroke:#92400e,color:#fff
+    style H3 fill:#b45309,stroke:#92400e,color:#fff
+    style H4 fill:#0369a1,stroke:#075985,color:#fff
+    style H5 fill:#6d28d9,stroke:#5b21b6,color:#fff

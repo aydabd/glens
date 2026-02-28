@@ -1,0 +1,51 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1e40af', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+graph TB
+    subgraph INPUT ["Input"]
+        URL["📄 OpenAPI Spec — URL or file"]
+        CFG["⚙️ Config — YAML / env vars"]
+    end
+
+    PARSE["parser — OpenAPI extraction"]
+    MGR["ai — AI Manager"]
+    GEN["generator — test gen + exec"]
+    GH["github — GitHub client"]
+    REP["reporter — report output"]
+
+    subgraph PROVIDERS ["AI Providers"]
+        GPT["OpenAI GPT-4"]
+        CLAUDE["Anthropic Claude"]
+        GEMINI["Google Gemini"]
+        OLLAMA["Ollama local"]
+    end
+
+    subgraph OUTPUT ["Output"]
+        MD["📝 Markdown"]
+        HTML["🌐 HTML"]
+        ISSUE["🐛 GitHub Issue"]
+    end
+
+    URL --> PARSE
+    CFG --> MGR
+    PARSE --> MGR
+    MGR --> GPT & CLAUDE & GEMINI & OLLAMA
+    GPT & CLAUDE & GEMINI & OLLAMA --> GEN
+    GEN -->|failures| GH --> ISSUE
+    GEN --> REP --> MD & HTML
+
+    style INPUT fill:#f1f5f9,stroke:#94a3b8,color:#0f172a
+    style PROVIDERS fill:#fefce8,stroke:#fde047,color:#0f172a
+    style OUTPUT fill:#f0fdf4,stroke:#86efac,color:#0f172a
+    style PARSE fill:#0369a1,stroke:#075985,color:#fff
+    style MGR fill:#b45309,stroke:#92400e,color:#fff
+    style GEN fill:#6d28d9,stroke:#5b21b6,color:#fff
+    style GH fill:#b91c1c,stroke:#991b1b,color:#fff
+    style REP fill:#047857,stroke:#065f46,color:#fff
+    style URL fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style CFG fill:#475569,stroke:#334155,color:#fff
+    style GPT fill:#0f172a,stroke:#1e293b,color:#fff
+    style CLAUDE fill:#0f172a,stroke:#1e293b,color:#fff
+    style GEMINI fill:#0f172a,stroke:#1e293b,color:#fff
+    style OLLAMA fill:#0f172a,stroke:#1e293b,color:#fff
+    style MD fill:#15803d,stroke:#166534,color:#fff
+    style HTML fill:#15803d,stroke:#166534,color:#fff
+    style ISSUE fill:#b91c1c,stroke:#991b1b,color:#fff

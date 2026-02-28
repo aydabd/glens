@@ -1,0 +1,19 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1e40af', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+graph LR
+    subgraph PARALLEL ["Parallel — independent triggers"]
+        PL["pkg-logging.yml — pkg/logging/**"]
+        GL["glens.yml — cmd/glens/**"]
+        AP["api.yml — cmd/api/**"]
+        TD["tool-demo.yml — cmd/tools/demo/**"]
+        TA["tool-accuracy.yml — cmd/tools/accuracy/**"]
+    end
+
+    REL["release.yml — v* tags — 5 platforms"]
+
+    style PARALLEL fill:#f1f5f9,stroke:#94a3b8,color:#0f172a
+    style PL fill:#15803d,stroke:#166534,color:#fff
+    style GL fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style AP fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style TD fill:#b45309,stroke:#92400e,color:#fff
+    style TA fill:#b45309,stroke:#92400e,color:#fff
+    style REL fill:#0f172a,stroke:#1e293b,color:#fff

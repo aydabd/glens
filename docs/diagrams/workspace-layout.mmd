@@ -1,0 +1,20 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1e40af', 'primaryTextColor': '#fff', 'lineColor': '#475569', 'fontSize': '14px'}}}%%
+graph TB
+    subgraph WS ["Go Workspace — go.work"]
+        direction TB
+        PKG["📦 pkg/logging — zerolog wrapper"]
+        GLENS["⚙️ cmd/glens — main CLI"]
+        API["🌐 cmd/api — REST API server"]
+        DEMO["🎨 cmd/tools/demo — spec visualiser"]
+        ACC["📈 cmd/tools/accuracy — accuracy reporter"]
+    end
+
+    GLENS -->|imports| PKG
+    API -->|imports| PKG
+
+    style WS fill:#f1f5f9,stroke:#94a3b8,color:#0f172a
+    style PKG fill:#15803d,stroke:#166534,color:#fff
+    style GLENS fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style API fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style DEMO fill:#b45309,stroke:#92400e,color:#fff
+    style ACC fill:#b45309,stroke:#92400e,color:#fff
