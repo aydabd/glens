@@ -1,5 +1,5 @@
 {
-  "pkg/logging": "0.0.1",
+  "pkg/logging": "0.0.2",
   "cmd/glens": "0.0.1",
   "cmd/api": "0.0.1",
   "cmd/tools/demo": "0.0.1",
