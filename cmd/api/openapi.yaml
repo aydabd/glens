@@ -1,0 +1,706 @@
+openapi: 3.1.0
+info:
+  title: Glens API
+  version: 1.0.0
+  description: Glens SaaS API for OpenAPI spec analysis and test generation
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development
+
+security:
+  - BearerAuth: []
+  - APIKeyAuth: []
+
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/analyze:
+    post:
+      summary: Start analysis
+      operationId: startAnalysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeRequest"
+      responses:
+        "202":
+          description: Analysis accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/analyze/preview:
+    post:
+      summary: Preview endpoint categories
+      operationId: analyzePreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreviewRequest"
+      responses:
+        "200":
+          description: Endpoint categories with risk levels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreviewResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/models:
+    get:
+      summary: List supported AI models
+      operationId: listModels
+      responses:
+        "200":
+          description: Supported models
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - models
+                properties:
+                  models:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ModelInfo"
+
+  /api/v1/mcp:
+    post:
+      summary: MCP JSON-RPC 2.0 endpoint
+      operationId: mcpCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MCPRequest"
+      responses:
+        "200":
+          description: JSON-RPC response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPResponse"
+        "400":
+          description: Parse error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPResponse"
+
+  /api/v1/issues:
+    post:
+      summary: Create issue via provider
+      operationId: createIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueRequest"
+      responses:
+        "201":
+          description: Issue created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/reports/{id}:
+    get:
+      summary: Get report by ID
+      operationId: getReport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "404":
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/secrets:
+    post:
+      summary: Store a secret
+      operationId: storeSecret
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretStoreRequest"
+      responses:
+        "201":
+          description: Secret stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretStoreResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/keys:
+    post:
+      summary: Create API key
+      operationId: createAPIKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/APIKeyRequest"
+      responses:
+        "201":
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIKeyResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List API keys
+      operationId: listAPIKeys
+      responses:
+        "200":
+          description: API keys
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - keys
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/APIKeyResponse"
+
+  /api/v1/keys/{id}:
+    delete:
+      summary: Revoke API key
+      operationId: revokeAPIKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: API key revoked
+        "404":
+          description: API key not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    APIKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+      properties:
+        status:
+          type: string
+          example: ok
+        version:
+          type: string
+          example: 1.0.0
+
+    AnalyzeRequest:
+      type: object
+      required:
+        - spec_url
+      properties:
+        spec_url:
+          type: string
+          format: uri
+          description: URL of the OpenAPI specification to analyze
+        models:
+          type: array
+          items:
+            type: string
+          description: AI models to use for test generation
+        approved_endpoints:
+          type: array
+          items:
+            type: string
+          description: Endpoints explicitly approved for testing
+        skipped_endpoints:
+          type: array
+          items:
+            type: string
+          description: Endpoints to skip during analysis
+        target_auth:
+          $ref: "#/components/schemas/TargetAuth"
+
+    TargetAuth:
+      type: object
+      description: Authentication credentials for the target API
+      properties:
+        type:
+          type: string
+          enum:
+            - bearer
+            - api_key
+            - basic
+          description: Authentication type
+        token:
+          type: string
+          description: Token or API key value
+        header:
+          type: string
+          description: Custom header name (for api_key type)
+        username:
+          type: string
+          description: Username (for basic type)
+        password:
+          type: string
+          description: Password (for basic type)
+
+    AnalyzeResponse:
+      type: object
+      required:
+        - run_id
+        - status
+      properties:
+        run_id:
+          type: string
+          description: Unique identifier for the analysis run
+          example: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4
+        status:
+          type: string
+          enum:
+            - accepted
+          example: accepted
+
+    ModelInfo:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+      properties:
+        id:
+          type: string
+          example: gpt-4o
+        name:
+          type: string
+          example: GPT-4o
+        provider:
+          type: string
+          example: openai
+
+    MCPRequest:
+      type: object
+      required:
+        - jsonrpc
+        - method
+      properties:
+        jsonrpc:
+          type: string
+          const: "2.0"
+        id:
+          description: Request identifier
+          oneOf:
+            - type: string
+            - type: integer
+        method:
+          type: string
+          description: "JSON-RPC method (e.g. tools/list, tools/call)"
+        params:
+          description: Method parameters
+      example:
+        jsonrpc: "2.0"
+        id: 1
+        method: tools/list
+
+    MCPResponse:
+      type: object
+      required:
+        - jsonrpc
+      properties:
+        jsonrpc:
+          type: string
+          const: "2.0"
+        id:
+          description: Request identifier echoed back
+          oneOf:
+            - type: string
+            - type: integer
+            - type: "null"
+        result:
+          description: Result on success
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              description: JSON-RPC error code
+            message:
+              type: string
+              description: Error message
+
+    PreviewRequest:
+      type: object
+      required:
+        - spec_url
+      properties:
+        spec_url:
+          type: string
+          format: uri
+          description: URL of the OpenAPI specification to preview
+
+    PreviewResponse:
+      type: object
+      required:
+        - spec_url
+        - endpoints
+      properties:
+        spec_url:
+          type: string
+          format: uri
+        endpoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndpointCategory"
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Any warnings generated during preview
+
+    EndpointCategory:
+      type: object
+      required:
+        - path
+        - method
+        - risk_level
+      properties:
+        path:
+          type: string
+          example: /pets
+        method:
+          type: string
+          example: GET
+        risk_level:
+          type: string
+          enum:
+            - safe
+            - medium
+            - high
+          description: Risk level for the endpoint
+        category:
+          type: string
+          enum:
+            - read
+            - write
+            - mutate
+            - destroy
+          description: Operation category
+
+    IssueRequest:
+      type: object
+      required:
+        - title
+        - body
+      properties:
+        title:
+          type: string
+          description: Issue title
+        body:
+          type: string
+          description: Issue body (markdown)
+        labels:
+          type: array
+          items:
+            type: string
+          description: Labels to apply
+
+    IssueResponse:
+      type: object
+      required:
+        - id
+        - url
+      properties:
+        id:
+          type: string
+          description: Issue identifier
+        url:
+          type: string
+          format: uri
+          description: URL to the created issue
+
+    ReportResponse:
+      type: object
+      required:
+        - id
+        - run_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Report identifier
+        run_id:
+          type: string
+          description: Associated analysis run ID
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - failed
+        created_at:
+          type: string
+          format: date-time
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+            passed:
+              type: integer
+            failed:
+              type: integer
+        report_url:
+          type: string
+          format: uri
+
+    SecretStoreRequest:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          description: Secret name
+        value:
+          type: string
+          description: Secret value
+
+    SecretStoreResponse:
+      type: object
+      required:
+        - ref
+      properties:
+        ref:
+          type: string
+          description: Opaque reference to the stored secret
+          example: secret:api-key:abc123
+
+    APIKeyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the API key
+
+    APIKeyResponse:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+      properties:
+        id:
+          type: string
+          description: API key identifier
+        name:
+          type: string
+          description: Human-readable name
+        key:
+          type: string
+          description: The API key value (only returned on creation)
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+
+    # --- Event schemas ---
+
+    Event:
+      type: object
+      required:
+        - event_type
+        - event_id
+        - timestamp
+        - workspace_id
+        - payload
+      properties:
+        event_type:
+          type: string
+          enum:
+            - analyze.completed
+            - test.failed
+            - report.generated
+            - secret.stored
+            - export.scheduled
+        event_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        workspace_id:
+          type: string
+        payload:
+          oneOf:
+            - $ref: "#/components/schemas/AnalyzeCompletedPayload"
+            - $ref: "#/components/schemas/TestFailedPayload"
+            - $ref: "#/components/schemas/ReportGeneratedPayload"
+            - $ref: "#/components/schemas/SecretStoredPayload"
+            - $ref: "#/components/schemas/ExportScheduledPayload"
+          discriminator:
+            propertyName: event_type
+            mapping:
+              analyze.completed: "#/components/schemas/AnalyzeCompletedPayload"
+              test.failed: "#/components/schemas/TestFailedPayload"
+              report.generated: "#/components/schemas/ReportGeneratedPayload"
+              secret.stored: "#/components/schemas/SecretStoredPayload"
+              export.scheduled: "#/components/schemas/ExportScheduledPayload"
+
+    AnalyzeCompletedPayload:
+      type: object
+      required:
+        - run_id
+        - passed
+        - failed
+      properties:
+        run_id:
+          type: string
+        passed:
+          type: integer
+        failed:
+          type: integer
+
+    TestFailedPayload:
+      type: object
+      required:
+        - run_id
+        - endpoint_path
+        - endpoint_method
+        - model
+        - error_message
+      properties:
+        run_id:
+          type: string
+        endpoint_path:
+          type: string
+        endpoint_method:
+          type: string
+        model:
+          type: string
+        error_message:
+          type: string
+
+    ReportGeneratedPayload:
+      type: object
+      required:
+        - run_id
+        - report_url
+      properties:
+        run_id:
+          type: string
+        report_url:
+          type: string
+          format: uri
+
+    SecretStoredPayload:
+      type: object
+      required:
+        - secret_ref
+        - name
+      properties:
+        secret_ref:
+          type: string
+        name:
+          type: string
+
+    ExportScheduledPayload:
+      type: object
+      required:
+        - dataset_id
+      properties:
+        dataset_id:
+          type: string
