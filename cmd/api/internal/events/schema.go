@@ -83,5 +83,8 @@ func ValidateEvent(e Event) error {
 	if e.WorkspaceID == "" {
 		return errors.New("workspace_id is required")
 	}
+	if e.Payload == nil {
+		return errors.New("payload is required")
+	}
 	return nil
 }

@@ -15,8 +15,13 @@ import (
 var version = "dev"
 
 func main() {
+	level := logging.LevelInfo
+	if envLevel := os.Getenv("LOG_LEVEL"); envLevel != "" {
+		level = logging.Level(envLevel)
+	}
+
 	logging.Setup(logging.Config{
-		Level:  logging.LevelInfo,
+		Level:  level,
 		Format: logging.FormatJSON,
 	})
 

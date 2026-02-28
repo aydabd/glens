@@ -24,6 +24,7 @@ func TestCORS_SetsHeaders(t *testing.T) {
 	assert.Contains(t, rec.Header().Get("Access-Control-Allow-Methods"), "POST")
 	assert.Contains(t, rec.Header().Get("Access-Control-Allow-Headers"), "Content-Type")
 	assert.Contains(t, rec.Header().Get("Access-Control-Allow-Headers"), "Authorization")
+	assert.Contains(t, rec.Header().Get("Access-Control-Allow-Headers"), "X-API-Key")
 }
 
 func TestCORS_OptionsPreflight_Returns204(t *testing.T) {
