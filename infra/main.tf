@@ -14,53 +14,80 @@ terraform {
   }
 }
 
+# Workspace-driven environment config.
+# Use `terraform workspace select dev` or `terraform workspace select prod`
+# to target the correct GCP project. Each workspace maps to an isolated
+# GCP project (separate billing account / org folder).
+locals {
+  env = {
+    dev = {
+      project       = "glens-dev"
+      log_level     = "debug"
+      min_instances = 0
+      max_instances = 1
+      alert_channel = "dev-slack"
+      alert_email   = ""
+    }
+    prod = {
+      project       = "glens-prod"
+      log_level     = "info"
+      min_instances = 1
+      max_instances = 10
+      alert_channel = "prod-pagerduty"
+      alert_email   = var.alert_email
+    }
+  }
+
+  cfg = local.env[contains(keys(local.env), terraform.workspace) ? terraform.workspace : "dev"]
+}
+
 provider "google" {
-  project = var.project
+  project = local.cfg.project
   region  = var.region
 }
 
 module "storage" {
   source  = "./modules/storage"
-  project = var.project
+  project = local.cfg.project
   region  = var.region
 }
 
 module "firestore" {
   source  = "./modules/firestore"
-  project = var.project
+  project = local.cfg.project
   region  = var.region
 }
 
 module "bigquery" {
   source  = "./modules/bigquery"
-  project = var.project
+  project = local.cfg.project
   region  = var.region
 }
 
 module "secrets" {
   source  = "./modules/secrets"
-  project = var.project
+  project = local.cfg.project
 }
 
 module "pubsub" {
   source  = "./modules/pubsub"
-  project = var.project
+  project = local.cfg.project
 }
 
 module "observability" {
   source        = "./modules/observability"
-  project       = var.project
-  alert_channel = var.alert_channel
-  alert_email   = var.alert_email
+  project       = local.cfg.project
+  alert_channel = local.cfg.alert_channel
+  alert_email   = local.cfg.alert_email
 }
 
 module "api" {
   source        = "./modules/api"
-  project       = var.project
+  project       = local.cfg.project
   region        = var.region
-  log_level     = var.log_level
-  min_instances = var.min_instances
-  max_instances = var.max_instances
+  log_level     = local.cfg.log_level
+  min_instances = local.cfg.min_instances
+  max_instances = local.cfg.max_instances
   api_image_tag = var.api_image_tag
 
   depends_on = [
