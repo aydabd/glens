@@ -31,24 +31,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
+      - uses: ./.github/actions/go-build
         with:
+          binary-name: glens
+          working-directory: cmd/glens
           go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: cmd/glens/go.mod
-
-      - name: Build
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          EXT=""
-          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
-          mkdir -p dist
-          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
-            -o "dist/${BINARY}" ./cmd/glens/.
+          version: ${{ github.ref_name }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -73,29 +63,17 @@ jobs:
             goarch: arm64
           - goos: windows
             goarch: amd64
-    defaults:
-      run:
-        working-directory: cmd/tools/demo
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
+      - uses: ./.github/actions/go-build
         with:
+          binary-name: glens-demo
+          working-directory: cmd/tools/demo
           go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: cmd/tools/demo/go.mod
-
-      - name: Build
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          EXT=""
-          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-demo-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
-          mkdir -p ../../dist
-          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o "../../dist/${BINARY}" .
+          version: ${{ github.ref_name }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -120,29 +98,17 @@ jobs:
             goarch: arm64
           - goos: windows
             goarch: amd64
-    defaults:
-      run:
-        working-directory: cmd/tools/accuracy
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
+      - uses: ./.github/actions/go-build
         with:
+          binary-name: glens-accuracy
+          working-directory: cmd/tools/accuracy
           go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: cmd/tools/accuracy/go.mod
-
-      - name: Build
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          EXT=""
-          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-accuracy-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
-          mkdir -p ../../dist
-          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o "../../dist/${BINARY}" .
+          version: ${{ github.ref_name }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -164,9 +130,10 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - name: Generate checksums
-        working-directory: dist
-        run: sha256sum * > checksums.txt
+      - uses: ./.github/actions/sign-assets
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2

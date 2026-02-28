@@ -1,0 +1,46 @@
+name: Sign Release Assets
+description: >
+  Generate SHA256 checksums for all files in a directory and optionally
+  create a GPG detached signature. Skips signing gracefully when no key
+  is provided.
+
+inputs:
+  gpg-private-key:
+    description: >
+      ASCII-armoured GPG private key for signing checksums.
+      When empty, GPG signing is skipped gracefully.
+    required: false
+    default: ""
+  gpg-passphrase:
+    description: >
+      Passphrase for the GPG private key.
+      When empty, GPG signing is skipped gracefully.
+    required: false
+    default: ""
+  assets-directory:
+    description: Directory containing the binaries to checksum and sign
+    required: false
+    default: dist
+
+runs:
+  using: composite
+  steps:
+    - name: Generate checksums and GPG sign
+      shell: bash
+      env:
+        GPG_PRIVATE_KEY: ${{ inputs.gpg-private-key }}
+        GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
+        ASSETS_DIR: ${{ inputs.assets-directory }}
+      run: |
+        set -euo pipefail
+        cd "${ASSETS_DIR}"
+        sha256sum * > checksums.txt
+        if [ -n "${GPG_PRIVATE_KEY:-}" ]; then
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
+          gpg --batch --yes --pinentry-mode loopback \
+            --passphrase "${GPG_PASSPHRASE}" \
+            --detach-sign --armor checksums.txt
+          echo "✅ GPG signature created: checksums.txt.asc"
+        else
+          echo "⚠️ GPG_PRIVATE_KEY not set — skipping GPG signing"
+        fi

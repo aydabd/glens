@@ -4,8 +4,8 @@ name: Release Please
 # Each module gets its own isolated release PR with a CHANGELOG.
 # Merging a release PR creates a GitHub Release with the correct semver tag.
 #
-# This workflow replaces manual tag-based releases with fully automated,
-# conventional-commit-driven releases per module.
+# Binary modules delegate build + sign + upload to the reusable
+# build-sign-release.yml workflow.
 
 on:
   push:
@@ -20,7 +20,6 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     outputs:
-      # Per-module release outputs for downstream jobs
       logging--release_created: ${{ steps.release.outputs['pkg/logging--release_created'] }}
       logging--tag_name: ${{ steps.release.outputs['pkg/logging--tag_name'] }}
       glens--release_created: ${{ steps.release.outputs['cmd/glens--release_created'] }}
@@ -39,287 +38,43 @@ jobs:
           manifest-file: .release-please-manifest.json
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── Build and sign binaries for cmd/glens ───────────────────────────────────
-  build-glens:
-    name: Build glens / ${{ matrix.goos }}-${{ matrix.goarch }}
+  # ── Per-module build + sign + release via reusable workflow ──────────────────
+  release-glens:
     needs: release-please
     if: needs.release-please.outputs.glens--release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
-          - goos: windows
-            goarch: arm64
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.25"
-          cache-dependency-path: cmd/glens/go.mod
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          set -euo pipefail
-          TAG="${{ needs.release-please.outputs.glens--tag_name }}"
-          VERSION="${TAG##*/v}"
-          EXT=""; if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-${GOOS}-${GOARCH}${EXT}"
-          mkdir -p dist
-          cd cmd/glens
-          go build -ldflags="-s -w -X main.version=${VERSION}" -o "../../dist/${BINARY}" .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: glens-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens
+      working-directory: cmd/glens
+      tag-name: ${{ needs.release-please.outputs.glens--tag_name }}
+    secrets: inherit
 
-  # ── Build and sign binaries for cmd/api ─────────────────────────────────────
-  build-api:
-    name: Build api / ${{ matrix.goos }}-${{ matrix.goarch }}
+  release-api:
     needs: release-please
     if: needs.release-please.outputs.api--release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
-          - goos: windows
-            goarch: arm64
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.25"
-          cache-dependency-path: cmd/api/go.mod
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          set -euo pipefail
-          TAG="${{ needs.release-please.outputs.api--tag_name }}"
-          VERSION="${TAG##*/v}"
-          EXT=""; if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-api-${GOOS}-${GOARCH}${EXT}"
-          mkdir -p dist
-          cd cmd/api
-          go build -ldflags="-s -w -X main.version=${VERSION}" -o "../../dist/${BINARY}" .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: glens-api-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens-api
+      working-directory: cmd/api
+      tag-name: ${{ needs.release-please.outputs.api--tag_name }}
+    secrets: inherit
 
-  # ── Build and sign binaries for cmd/tools/demo ──────────────────────────────
-  build-demo:
-    name: Build demo / ${{ matrix.goos }}-${{ matrix.goarch }}
+  release-demo:
     needs: release-please
     if: needs.release-please.outputs.demo--release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
-          - goos: windows
-            goarch: arm64
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.25"
-          cache-dependency-path: cmd/tools/demo/go.mod
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          set -euo pipefail
-          TAG="${{ needs.release-please.outputs.demo--tag_name }}"
-          VERSION="${TAG##*/v}"
-          EXT=""; if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-demo-${GOOS}-${GOARCH}${EXT}"
-          mkdir -p dist
-          cd cmd/tools/demo
-          go build -ldflags="-s -w -X main.version=${VERSION}" -o "../../../dist/${BINARY}" .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: glens-demo-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens-demo
+      working-directory: cmd/tools/demo
+      tag-name: ${{ needs.release-please.outputs.demo--tag_name }}
+    secrets: inherit
 
-  # ── Build and sign binaries for cmd/tools/accuracy ──────────────────────────
-  build-accuracy:
-    name: Build accuracy / ${{ matrix.goos }}-${{ matrix.goarch }}
+  release-accuracy:
     needs: release-please
     if: needs.release-please.outputs.accuracy--release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
-          - goos: windows
-            goarch: arm64
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.25"
-          cache-dependency-path: cmd/tools/accuracy/go.mod
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: "0"
-        run: |
-          set -euo pipefail
-          TAG="${{ needs.release-please.outputs.accuracy--tag_name }}"
-          VERSION="${TAG##*/v}"
-          EXT=""; if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          BINARY="glens-accuracy-${GOOS}-${GOARCH}${EXT}"
-          mkdir -p dist
-          cd cmd/tools/accuracy
-          go build -ldflags="-s -w -X main.version=${VERSION}" -o "../../../dist/${BINARY}" .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: glens-accuracy-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/
-
-  # ── Sign and upload assets for any released binary module ───────────────────
-  sign-and-release:
-    name: Sign & upload — ${{ matrix.module }}
-    needs: [release-please, build-glens, build-api, build-demo, build-accuracy]
-    if: always() && needs.release-please.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - module: glens
-            created: needs.release-please.outputs.glens--release_created
-            tag: needs.release-please.outputs.glens--tag_name
-            pattern: glens-*
-            build_job: build-glens
-          - module: api
-            created: needs.release-please.outputs.api--release_created
-            tag: needs.release-please.outputs.api--tag_name
-            pattern: glens-api-*
-            build_job: build-api
-          - module: demo
-            created: needs.release-please.outputs.demo--release_created
-            tag: needs.release-please.outputs.demo--tag_name
-            pattern: glens-demo-*
-            build_job: build-demo
-          - module: accuracy
-            created: needs.release-please.outputs.accuracy--release_created
-            tag: needs.release-please.outputs.accuracy--tag_name
-            pattern: glens-accuracy-*
-            build_job: build-accuracy
-    steps:
-      - name: Check if release was created
-        id: check
-        run: |
-          # Use outputs directly since matrix expressions don't resolve needs
-          case "${{ matrix.module }}" in
-            glens)    CREATED="${{ needs.release-please.outputs.glens--release_created }}"
-                      TAG="${{ needs.release-please.outputs.glens--tag_name }}" ;;
-            api)      CREATED="${{ needs.release-please.outputs.api--release_created }}"
-                      TAG="${{ needs.release-please.outputs.api--tag_name }}" ;;
-            demo)     CREATED="${{ needs.release-please.outputs.demo--release_created }}"
-                      TAG="${{ needs.release-please.outputs.demo--tag_name }}" ;;
-            accuracy) CREATED="${{ needs.release-please.outputs.accuracy--release_created }}"
-                      TAG="${{ needs.release-please.outputs.accuracy--tag_name }}" ;;
-          esac
-          echo "created=${CREATED}" >> "$GITHUB_OUTPUT"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Download binary artifacts
-        if: steps.check.outputs.created == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          pattern: ${{ matrix.pattern }}
-          path: dist/
-          merge-multiple: true
-
-      - name: Generate checksums and GPG sign
-        if: steps.check.outputs.created == 'true'
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        working-directory: dist
-        run: |
-          set -euo pipefail
-
-          # Generate SHA256 checksums
-          sha256sum * > checksums.txt
-
-          # GPG sign if key is available
-          if [ -n "${GPG_PRIVATE_KEY:-}" ]; then
-            echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
-            gpg --batch --yes --pinentry-mode loopback \
-              --passphrase "${GPG_PASSPHRASE}" \
-              --detach-sign --armor checksums.txt
-            echo "✅ GPG signature created: checksums.txt.asc"
-          else
-            echo "⚠️ GPG_PRIVATE_KEY not set — skipping GPG signing"
-          fi
-
-      - name: Upload signed assets to release
-        if: steps.check.outputs.created == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.check.outputs.tag }}
-          files: dist/*
-          token: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/build-sign-release.yml
+    with:
+      binary-name: glens-accuracy
+      working-directory: cmd/tools/accuracy
+      tag-name: ${{ needs.release-please.outputs.accuracy--tag_name }}
+    secrets: inherit

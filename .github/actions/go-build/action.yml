@@ -1,0 +1,70 @@
+name: Build Go Binary
+description: >
+  Cross-compile a single Go binary for a given GOOS/GOARCH target.
+  Expects the repository to be checked out already via actions/checkout.
+
+inputs:
+  binary-name:
+    description: Output binary name prefix (e.g. "glens", "glens-api")
+    required: true
+  working-directory:
+    description: Module directory containing go.mod (e.g. "cmd/glens")
+    required: true
+  go-version:
+    description: Go toolchain version
+    required: false
+    default: "1.25"
+  version:
+    description: Version string embedded via -ldflags (e.g. "1.2.3")
+    required: true
+  goos:
+    description: Target operating system (linux, darwin, windows)
+    required: true
+  goarch:
+    description: Target architecture (amd64, arm64)
+    required: true
+
+outputs:
+  binary-path:
+    description: Relative path to the built binary
+    value: ${{ steps.build.outputs.binary_path }}
+  binary-name:
+    description: Full binary filename (e.g. "glens-linux-amd64")
+    value: ${{ steps.build.outputs.binary_name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+        cache-dependency-path: ${{ inputs.working-directory }}/go.mod
+
+    - name: Build binary
+      id: build
+      shell: bash
+      env:
+        GOOS: ${{ inputs.goos }}
+        GOARCH: ${{ inputs.goarch }}
+        CGO_ENABLED: "0"
+        VERSION: ${{ inputs.version }}
+        BINARY_NAME: ${{ inputs.binary-name }}
+        WORKING_DIR: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        if [ -z "$BINARY_NAME" ]; then
+          echo "::error::binary-name is required"
+          exit 1
+        fi
+        EXT=""
+        if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+        BINARY="${BINARY_NAME}-${GOOS}-${GOARCH}${EXT}"
+        mkdir -p "${GITHUB_WORKSPACE}/dist"
+        cd "${WORKING_DIR}"
+        go build \
+          -ldflags="-s -w -X main.version=${VERSION}" \
+          -o "${GITHUB_WORKSPACE}/dist/${BINARY}" .
+        echo "binary_path=dist/${BINARY}" >> "$GITHUB_OUTPUT"
+        echo "binary_name=${BINARY}" >> "$GITHUB_OUTPUT"
