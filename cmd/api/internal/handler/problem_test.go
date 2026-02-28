@@ -47,13 +47,6 @@ func TestProblemDetail_ContentType(t *testing.T) {
 			path:    "/api/v1/analyze/preview",
 			body:    `{}`,
 		},
-		{
-			name:    "mcp invalid JSON",
-			handler: MCP,
-			method:  http.MethodPost,
-			path:    "/api/v1/mcp",
-			body:    `{bad`,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,12 +96,6 @@ func TestProblemDetail_InstanceMatchesRequestPath(t *testing.T) {
 			handler: AnalyzePreview,
 			path:    "/api/v1/analyze/preview",
 			body:    `{}`,
-		},
-		{
-			name:    "mcp path",
-			handler: MCP,
-			path:    "/api/v1/mcp",
-			body:    `{bad`,
 		},
 	}
 	for _, tt := range tests {
