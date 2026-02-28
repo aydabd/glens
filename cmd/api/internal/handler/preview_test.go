@@ -54,11 +54,14 @@ func TestAnalyzePreview_MissingSpecURL_Returns400(t *testing.T) {
 	AnalyzePreview(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
 
-	var resp map[string]string
+	var resp ProblemDetail
 	err := json.NewDecoder(rec.Body).Decode(&resp)
 	require.NoError(t, err)
-	assert.Contains(t, resp["error"], "spec_url is required")
+	assert.Equal(t, ProblemTypeValidation, resp.Type)
+	assert.Contains(t, resp.Detail, "spec_url is required")
+	assert.Equal(t, "/api/v1/analyze/preview", resp.Instance)
 }
 
 func TestAnalyzePreview_InvalidJSON_Returns400(t *testing.T) {
@@ -77,11 +80,14 @@ func TestAnalyzePreview_InvalidJSON_Returns400(t *testing.T) {
 			AnalyzePreview(rec, req)
 
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
+			assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
 
-			var resp map[string]string
+			var resp ProblemDetail
 			err := json.NewDecoder(rec.Body).Decode(&resp)
 			require.NoError(t, err)
-			assert.Contains(t, resp["error"], "invalid request body")
+			assert.Equal(t, ProblemTypeValidation, resp.Type)
+			assert.Contains(t, resp.Detail, "invalid request body")
+			assert.Equal(t, "/api/v1/analyze/preview", resp.Instance)
 		})
 	}
 }

@@ -33,6 +33,8 @@
 | EN-01 – EN-05 | Dev/prod parity, no env-specific code paths | 15 |
 | RV-01 – RV-06 | Semver, pre-release, promote, regression gates | 16 |
 | IP-01 – IP-05 | Issue provider interface, GitHub/GitLab/Jira | 17 |
+| PD-01 – PD-06 | RFC 9457 Problem Details error responses | 18 |
+| EA-01 – EA-08 | Enterprise SSO, RBAC, org-level auth | 18 |
 
 ## Phases (all independent, parallel)
 
@@ -55,6 +57,7 @@
 | 15 | [PHASE15_ENV_PARITY.md](PHASE15_ENV_PARITY.md) | Dev/prod parity |
 | 16 | [PHASE16_RELEASES_VERSIONING.md](PHASE16_RELEASES_VERSIONING.md) | Semver releases |
 | 17 | [PHASE17_ISSUE_PROVIDER.md](PHASE17_ISSUE_PROVIDER.md) | Issue providers |
+| 18 | [PHASE18_RFC9457_ENTERPRISE_AUTH.md](PHASE18_RFC9457_ENTERPRISE_AUTH.md) | RFC 9457, SSO, RBAC |
 
 ## Tech Stack (latest stable, Feb 2026)
 

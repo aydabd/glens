@@ -28,12 +28,14 @@ type previewResponse struct {
 func AnalyzePreview(w http.ResponseWriter, r *http.Request) {
 	var req previewRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+		writeProblem(w, r, http.StatusBadRequest, ProblemTypeValidation,
+			"Validation Error", fmt.Sprintf("invalid request body: %v", err))
 		return
 	}
 
 	if req.SpecURL == "" {
-		writeError(w, http.StatusBadRequest, fmt.Errorf("spec_url is required"))
+		writeProblem(w, r, http.StatusBadRequest, ProblemTypeValidation,
+			"Validation Error", "spec_url is required")
 		return
 	}
 

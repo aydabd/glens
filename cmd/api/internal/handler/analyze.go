@@ -26,18 +26,21 @@ type analyzeResponse struct {
 func Analyze(w http.ResponseWriter, r *http.Request) {
 	var req analyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+		writeProblem(w, r, http.StatusBadRequest, ProblemTypeValidation,
+			"Validation Error", fmt.Sprintf("invalid request body: %v", err))
 		return
 	}
 
 	if req.SpecURL == "" {
-		writeError(w, http.StatusBadRequest, fmt.Errorf("spec_url is required"))
+		writeProblem(w, r, http.StatusBadRequest, ProblemTypeValidation,
+			"Validation Error", "spec_url is required")
 		return
 	}
 
 	runID, err := generateRunID()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, fmt.Errorf("generate run id: %w", err))
+		writeProblem(w, r, http.StatusInternalServerError, ProblemTypeInternal,
+			"Internal Server Error", fmt.Sprintf("generate run id: %v", err))
 		return
 	}
 
@@ -53,9 +56,4 @@ func generateRunID() (string, error) {
 		return "", fmt.Errorf("read random bytes: %w", err)
 	}
 	return hex.EncodeToString(b), nil
-}
-
-// writeError writes a JSON error response.
-func writeError(w http.ResponseWriter, status int, err error) {
-	writeJSON(w, status, map[string]string{"error": err.Error()})
 }

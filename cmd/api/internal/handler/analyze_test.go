@@ -46,11 +46,16 @@ func TestAnalyze_InvalidJSON_Returns400(t *testing.T) {
 			Analyze(rec, req)
 
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
+			assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
 
-			var resp map[string]string
+			var resp ProblemDetail
 			err := json.NewDecoder(rec.Body).Decode(&resp)
 			require.NoError(t, err)
-			assert.Contains(t, resp["error"], "invalid request body")
+			assert.Equal(t, ProblemTypeValidation, resp.Type)
+			assert.Equal(t, "Validation Error", resp.Title)
+			assert.Equal(t, http.StatusBadRequest, resp.Status)
+			assert.Contains(t, resp.Detail, "invalid request body")
+			assert.Equal(t, "/api/v1/analyze", resp.Instance)
 		})
 	}
 }
@@ -63,11 +68,16 @@ func TestAnalyze_MissingSpecURL_Returns400(t *testing.T) {
 	Analyze(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
 
-	var resp map[string]string
+	var resp ProblemDetail
 	err := json.NewDecoder(rec.Body).Decode(&resp)
 	require.NoError(t, err)
-	assert.Contains(t, resp["error"], "spec_url is required")
+	assert.Equal(t, ProblemTypeValidation, resp.Type)
+	assert.Equal(t, "Validation Error", resp.Title)
+	assert.Equal(t, http.StatusBadRequest, resp.Status)
+	assert.Contains(t, resp.Detail, "spec_url is required")
+	assert.Equal(t, "/api/v1/analyze", resp.Instance)
 }
 
 func TestAnalyze_WrongMethod_Returns405(t *testing.T) {
