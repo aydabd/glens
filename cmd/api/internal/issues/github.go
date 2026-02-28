@@ -25,7 +25,8 @@ func NewGitHubProvider(cfg ProviderConfig) (IssueProvider, error) {
 	return &GitHubProvider{owner: parts[0], repo: parts[1]}, nil
 }
 
-func (g *GitHubProvider) CreateIssue(_ context.Context, req CreateIssueRequest) (IssueResult, error) {
+// CreateIssue creates a stub issue (not yet calling the GitHub API).
+func (g *GitHubProvider) CreateIssue(_ context.Context, _ CreateIssueRequest) (IssueResult, error) {
 	return IssueResult{
 		ID:     fmt.Sprintf("%s/%s/1", g.owner, g.repo),
 		URL:    fmt.Sprintf("https://github.com/%s/%s/issues/1", g.owner, g.repo),
@@ -33,14 +34,17 @@ func (g *GitHubProvider) CreateIssue(_ context.Context, req CreateIssueRequest) 
 	}, nil
 }
 
+// UpdateIssue is not yet implemented.
 func (g *GitHubProvider) UpdateIssue(_ context.Context, _ string, _ UpdateIssueRequest) error {
 	return fmt.Errorf("github: UpdateIssue not implemented")
 }
 
+// CloseIssue is not yet implemented.
 func (g *GitHubProvider) CloseIssue(_ context.Context, _ string) error {
 	return fmt.Errorf("github: CloseIssue not implemented")
 }
 
+// ListIssues returns an empty list (stub).
 func (g *GitHubProvider) ListIssues(_ context.Context, _ IssueFilter) ([]IssueResult, error) {
 	return []IssueResult{}, nil
 }
