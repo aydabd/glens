@@ -70,6 +70,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full contributor guide.
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — Contributor guide
 - [docs/diagrams/architecture.md](docs/diagrams/architecture.md) — Architecture diagrams
 - [docs/saas/SAAS_PLAN.md](docs/saas/SAAS_PLAN.md) — SaaS transformation plan (GCP)
+- [docs/deploy/DEPLOY_GCP.md](docs/deploy/DEPLOY_GCP.md) — Deploy Glens to GCP (step-by-step)
 
 ## License
 
