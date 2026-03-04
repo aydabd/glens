@@ -332,7 +332,7 @@ CREATE TABLE users (
 -- workspaces
 CREATE TABLE workspaces (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id    UUID REFERENCES users(id),
+    owner_id    UUID REFERENCES users(id) ON DELETE CASCADE,
     name        TEXT NOT NULL,
     config      JSONB DEFAULT '{}',
     created_at  TIMESTAMPTZ DEFAULT now()
@@ -341,7 +341,7 @@ CREATE TABLE workspaces (
 -- runs
 CREATE TABLE runs (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace_id UUID REFERENCES workspaces(id),
+    workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
     spec_url    TEXT NOT NULL,
     models      TEXT[] NOT NULL,
     status      TEXT NOT NULL DEFAULT 'pending',
@@ -354,7 +354,7 @@ CREATE INDEX idx_runs_workspace ON runs(workspace_id, created_at DESC);
 -- results (per endpoint per model)
 CREATE TABLE results (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    run_id      UUID REFERENCES runs(id),
+    run_id      UUID REFERENCES runs(id) ON DELETE CASCADE,
     endpoint    TEXT NOT NULL,
     method      TEXT NOT NULL,
     model       TEXT NOT NULL,
@@ -392,9 +392,9 @@ Workers are the **same Go binary** started with a `--worker` flag
 and a `--queue` argument:
 
 ```bash
-glens-api --worker --queue=reports
-glens-api --worker --queue=issues
-glens-api --worker --queue=notifications
+glens --worker --queue=reports
+glens --worker --queue=issues
+glens --worker --queue=notifications
 ```
 
 Each worker deployment in Kubernetes scales independently via HPA.
