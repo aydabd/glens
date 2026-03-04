@@ -66,7 +66,7 @@
 | Document | Purpose |
 |----------|---------|
 | [GCP_IMPLEMENTATION_STATUS.md](GCP_IMPLEMENTATION_STATUS.md) | Per-phase checklist of what is built vs remaining |
-| [AWS_EKS_DEPLOYMENT_PLAN.md](AWS_EKS_DEPLOYMENT_PLAN.md) | Plan for deploying Glens on AWS EKS |
+| [AWS_EKS_DEPLOYMENT_PLAN.md](AWS_EKS_DEPLOYMENT_PLAN.md) | Plan for deploying Glens on AWS EKS with PostgreSQL/MongoDB + RabbitMQ/Kafka |
 
 ## Tech Stack (latest stable, Feb 2026)
 
