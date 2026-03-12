@@ -121,7 +121,7 @@ Both are supported. Pick one based on messaging patterns:
 | Throughput | ~50K msg/s | ~1M msg/s |
 | Managed AWS | **Amazon MQ** | **Amazon MSK** |
 | In-cluster | Helm: `bitnami/rabbitmq` | Helm: `bitnami/kafka` |
-| Go client | `streadway/amqp` | `segmentio/kafka-go` |
+| Go client | `rabbitmq/amqp091-go` | `segmentio/kafka-go` |
 | Best for | Task queues, simple pub/sub | Event sourcing, high volume |
 
 ### Recommendation
