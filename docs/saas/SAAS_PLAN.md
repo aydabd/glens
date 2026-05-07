@@ -61,6 +61,13 @@
 | 18 | [PHASE18_RFC9457_ENTERPRISE_AUTH.md](PHASE18_RFC9457_ENTERPRISE_AUTH.md) | RFC 9457, SSO, RBAC |
 | 19 | [PHASE19_REALTIME_ANALYSIS.md](PHASE19_REALTIME_ANALYSIS.md) | Real-time SSE streaming |
 
+## Status & Multi-Cloud
+
+| Document | Purpose |
+|----------|---------|
+| [GCP_IMPLEMENTATION_STATUS.md](GCP_IMPLEMENTATION_STATUS.md) | Per-phase checklist of what is built vs remaining |
+| [AWS_EKS_DEPLOYMENT_PLAN.md](AWS_EKS_DEPLOYMENT_PLAN.md) | Plan for deploying Glens on AWS EKS with PostgreSQL/MongoDB + RabbitMQ/Kafka |
+
 ## Tech Stack (latest stable, Feb 2026)
 
 | Layer | Technology | Version |
