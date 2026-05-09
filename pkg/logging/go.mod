@@ -1,6 +1,6 @@
 module glens/pkg/logging
 
-go 1.25
+go 1.25.0
 
 require github.com/rs/zerolog v1.34.0
 
