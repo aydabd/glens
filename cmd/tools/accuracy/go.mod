@@ -1,3 +1,3 @@
 module glens/tools/accuracy
 
-go 1.25
+go 1.25.0
