@@ -46,97 +46,23 @@ go.work
 - Handle errors explicitly — never ignore them.
 - Write tests for new functionality.
 
-## Architecture Patterns
-
-```go
-// Prefer this — small, composable functions
-func ProcessEndpoint(ep *Endpoint) error {
-    if err := validate(ep); err != nil {
-        return fmt.Errorf("validation: %w", err)
-    }
-    return process(ep)
-}
-```
-
-### Error handling
-
-```go
-if err != nil {
-    return fmt.Errorf("operation context: %w", err)
-}
-```
-
-### Logging (via pkg/logging)
-
-```go
-log.Info().Str("key", val).Msg("What happened")
-log.Error().Err(err).Msg("What failed")
-```
-
-## Critical Logic: GitHub Issue Creation
-
-Issues are created **only** when:
-- Tests execute successfully (no compilation errors).
-- Tests fail with assertion errors (spec violations).
-- Failures are genuine OpenAPI spec mismatches.
-
-Issues are **not** created when:
-- Connection to the server fails.
-- Test compilation fails.
-- Infrastructure / setup issues occur.
-
-**Key function**: `isRealTestFailure()` in `cmd/glens/cmd/analyze.go` — preserve this
-distinction when modifying test-failure detection logic.
-
 ## Skills
 
-Specialised agent skills live in `.github/skills/` (Copilot CLI / Claude CLI format).
-Each skill directory contains a `SKILL.md` with `name` and `description` frontmatter.
-Each skill file is ≤ 100 lines and covers one focused topic.
+Specialised agent skills live in `.github/skills/`.
+Each skill directory contains a `SKILL.md` (≤ 100 lines) covering one focused topic.
 
 | Skill directory | Purpose |
 |---|---|
-| `testing-strategy` | Testing philosophy, value-driven approach, naming, corner-case checklist |
-| `testing-patterns` | Go-specific patterns: table-driven tests, mocks, setup functions, assertions |
-| `testing-integration` | Integration and end-to-end testing design and fixture patterns |
-
-
-## Testing
-
-Use table-driven tests with `testify`:
-
-```go
-func TestSomething(t *testing.T) {
-    tests := []struct {
-        name    string
-        input   string
-        want    string
-        wantErr bool
-    }{
-        {"valid", "input", "output", false},
-        {"invalid", "", "", true},
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            got, err := Function(tt.input)
-            if tt.wantErr {
-                assert.Error(t, err)
-                return
-            }
-            assert.NoError(t, err)
-            assert.Equal(t, tt.want, got)
-        })
-    }
-}
-```
-
-- Mock external dependencies.
-- Test error cases, not just happy paths.
-- Integration tests use `test_specs/sample_api.json` — no network dependency.
+| `go-patterns` | Architecture patterns, error handling, critical logic |
+| `testing-strategy` | Testing philosophy, value-driven approach, naming |
+| `testing-patterns` | Table-driven tests, mocks, setup functions, assertions |
+| `testing-integration` | Integration and E2E testing design, fixture patterns |
+| `common-tasks` | Build commands, adding modules/flags, change checklist |
 
 ## Documentation
 
 Update docs only when:
+
 - CLI interface changes.
 - Setup process changes.
 - New configuration options are added.
@@ -144,95 +70,8 @@ Update docs only when:
 
 Do **not** update docs for internal refactoring, bug fixes, or performance improvements.
 
-Per-module READMEs:
-- `cmd/glens/README.md`
-- `cmd/tools/demo/README.md`
-- `cmd/tools/accuracy/README.md`
-- `pkg/logging/README.md`
-
-Root `README.md` links to every module README. `docs/` holds user guides and architecture diagrams.
-
-## File Structure
-
-```
-go.work                          # workspace root — no go.mod here
-pkg/
-  logging/                       # module glens/pkg/logging
-    logging.go                   # zerolog wrapper
-    go.mod
-    Makefile
-    README.md
-cmd/
-  glens/                         # module glens/tools/glens
-    main.go
-    cmd/                         # cobra commands
-    internal/
-      ai/                        # AI provider clients
-      generator/                 # test generation + execution
-      github/                    # GitHub API client
-      parser/                    # OpenAPI spec parser
-      reporter/                  # report generation
-    go.mod
-    Makefile
-    README.md
-  tools/
-    demo/                        # module glens/tools/demo
-      internal/loader/ render/
-      go.mod
-      Makefile
-      README.md
-    accuracy/                    # module glens/tools/accuracy
-      internal/analyze/ report/
-      go.mod
-      Makefile
-      README.md
-configs/                         # example configuration files
-docs/                            # user guides and architecture diagrams
-test_specs/                      # OpenAPI specs used in integration tests
-```
-
-## Common Tasks
-
-**Working in a module:**
-
-```bash
-cd cmd/glens       # or cmd/tools/demo, cmd/tools/accuracy, pkg/logging
-make all           # fmt-check + vet + lint + test (identical to CI)
-make build
-```
-
-**Adding a CLI flag (cmd/glens):**
-
-```go
-cmd.Flags().String("flag-name", "default", "Clear description")
-_ = viper.BindPFlag("config.key", cmd.Flags().Lookup("flag-name"))
-```
-
-**Adding a new tool module:**
-
-1. `mkdir cmd/tools/<name> && cd cmd/tools/<name>`
-2. `go mod init glens/tools/<name>`
-3. Add `use ./cmd/tools/<name>` to `go.work`
-4. Copy `Makefile` and `.pre-commit-config.yaml` from an existing tool
-5. Add `.github/workflows/tool-<name>.yml`
-6. Add binary to `.github/workflows/release.yml`
-
-**Adding a config option:**
-
-```yaml
-# configs/config.example.yaml
-new_option: "${ENV_VAR}"
-```
-
-## Before Any Change — Checklist
-
-1. Is this the simplest solution?
-2. Will this be easy to maintain in two years?
-3. Can someone new understand this in five minutes?
-4. Does this follow Go idioms?
-5. Does this respect the module isolation rules (`pkg/` vs `internal/`)?
-
-If any answer is "no", reconsider the approach.
+Per-module READMEs: `cmd/glens/`, `cmd/tools/demo/`, `cmd/tools/accuracy/`, `pkg/logging/`.
+Root `README.md` links to every module README. `docs/` holds user guides.
 
 ## Mandatory Linting — Before Every Commit
 

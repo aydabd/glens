@@ -26,7 +26,7 @@ go.work                          # Go workspace root (no go.mod here)
     └── README.md
 ```
 
-**`pkg/`** — generic reusable libraries; no `internal/` imports; independently versioned.  
+**`pkg/`** — generic reusable libraries; no `internal/` imports; independently versioned.
 **`cmd/*/internal/`** — module-private code; never imported across module boundaries.
 
 ## Setup
