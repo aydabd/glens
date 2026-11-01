@@ -28,7 +28,7 @@ jobs:
       module-name: api
       tag-prefix: cmd/api/v
       working-directory: cmd/api
-      go-version: "1.25"
+      go-version: "1.26"
       build-binary: true
       binary-name: glens-api
       environment: production

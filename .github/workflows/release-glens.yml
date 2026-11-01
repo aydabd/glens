@@ -28,7 +28,7 @@ jobs:
       module-name: glens
       tag-prefix: cmd/glens/v
       working-directory: cmd/glens
-      go-version: "1.25"
+      go-version: "1.26"
       build-binary: true
       binary-name: glens
       environment: production

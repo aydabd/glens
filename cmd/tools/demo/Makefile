@@ -5,7 +5,7 @@
 
 MODULE      := glens/tools/demo
 ENV_NAME    := glens-dev
-LINT_VER    := v2.4.0
+LINT_VER    := v2.15.0
 
 MAMBA := $(shell command -v micromamba 2>/dev/null)
 ifdef MAMBA
@@ -42,9 +42,8 @@ tidy: ## Run go mod tidy
 	$(GO) mod tidy
 
 lint: ## Run golangci-lint (auto-installs if missing)
-	@$(RUN) 'if ! command -v golangci-lint >/dev/null 2>&1; then \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VER); \
-	fi && export PATH="$$(go env GOPATH)/bin:$$PATH" && golangci-lint run --timeout=3m'
+	@$(RUN) 'go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VER) && \
+	export PATH="$$(go env GOPATH)/bin:$$PATH" && golangci-lint run --timeout=3m'
 
 test: ## Run tests with race detector
 	$(GO) test -short -v -race ./...

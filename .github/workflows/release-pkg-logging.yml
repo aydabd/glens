@@ -28,7 +28,7 @@ jobs:
       module-name: logging
       tag-prefix: pkg/logging/v
       working-directory: pkg/logging
-      go-version: "1.25"
+      go-version: "1.26"
       build-binary: false
       environment: production
       default-bump: patch
