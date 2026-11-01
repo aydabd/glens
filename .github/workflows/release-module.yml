@@ -55,7 +55,7 @@ on:
         description: Go toolchain version to use.
         required: false
         type: string
-        default: "1.25"
+        default: "1.26"
       build-binary:
         description: >
           Set to true to cross-compile Go binaries and attach them to the

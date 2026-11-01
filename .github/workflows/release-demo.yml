@@ -28,7 +28,7 @@ jobs:
       module-name: demo
       tag-prefix: cmd/tools/demo/v
       working-directory: cmd/tools/demo
-      go-version: "1.25"
+      go-version: "1.26"
       build-binary: true
       binary-name: glens-demo
       environment: production

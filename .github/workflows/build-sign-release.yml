@@ -30,7 +30,7 @@ on:
         description: Go toolchain version to use.
         required: false
         type: string
-        default: "1.25"
+        default: "1.26"
       tag-name:
         description: >
           Full git tag for the GitHub Release (e.g. "cmd/glens/v1.2.3").
