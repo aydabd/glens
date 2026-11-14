@@ -1,7 +1,11 @@
 go 1.26.0
 
 use ./pkg/logging
+
 use ./cmd/glens
+
 use ./cmd/tools/demo
+
 use ./cmd/tools/accuracy
+
 use ./cmd/api
